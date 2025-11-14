@@ -22,6 +22,7 @@ import kotlinx.coroutines.sync.withLock
 import java.io.File
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.math.min
+import com.demushrenich.archim.R
 
 class DirectoryContentViewModel : ViewModel() {
 
@@ -167,7 +168,7 @@ class DirectoryContentViewModel : ViewModel() {
         currentGenerationJob = viewModelScope.launch {
             _isGeneratingPreviews = true
             try {
-                _currentPreviewProgress = "Сканирование директории..."
+                _currentPreviewProgress = context.getString(R.string.preview_scanning_directory)
                 Log.d(TAG, "Starting directory scan")
 
                 val allArchivesRecursive = getAllArchivesWithProgress(
@@ -184,7 +185,7 @@ class DirectoryContentViewModel : ViewModel() {
                 Log.d(TAG, "Found ${archivesToProcess.size} archives to process")
 
                 if (archivesToProcess.isEmpty()) {
-                    _currentPreviewProgress = "Все превью уже сгенерированы"
+                    _currentPreviewProgress = context.getString(R.string.preview_all_already_generated)
                     delay(2000)
                     return@launch
                 }
@@ -195,17 +196,17 @@ class DirectoryContentViewModel : ViewModel() {
                     onUpdateArchives = onUpdateArchives
                 )
 
-                _currentPreviewProgress = "Завершено! Обработано ${archivesToProcess.size} архивов"
+                _currentPreviewProgress = context.getString(R.string.preview_generation_complete, archivesToProcess.size)
                 delay(2000)
 
             } catch (e: CancellationException) {
                 Log.d(TAG, "Preview generation cancelled")
-                _currentPreviewProgress = "Генерация отменена"
+                _currentPreviewProgress = context.getString(R.string.preview_generation_cancelled)
                 delay(1000)
                 throw e
             } catch (e: Exception) {
                 Log.e(TAG, "Error generating previews", e)
-                _currentPreviewProgress = "Ошибка при генерации превью: ${e.message}"
+                _currentPreviewProgress = context.getString(R.string.preview_generation_error, e.message ?: "")
                 delay(3000)
             } finally {
                 _isGeneratingPreviews = false
@@ -215,7 +216,6 @@ class DirectoryContentViewModel : ViewModel() {
         }
     }
 
-    // 1) Обновлённый processArchivesInParallel
     private suspend fun processArchivesInParallel(
         context: Context,
         archives: List<ArchiveInfo>,
@@ -245,7 +245,7 @@ class DirectoryContentViewModel : ViewModel() {
 
                     withContext(Dispatchers.Main) {
                         _currentPreviewProgress =
-                            "Обработка ($currentCount/$totalCount): ${archive.displayName}"
+                            context.getString(R.string.preview_processing_archive, currentCount, totalCount, archive.displayName)
                     }
 
                     Log.d(TAG, "Worker $workerId processing ${archive.displayName} ($currentCount/$totalCount)")
@@ -303,7 +303,6 @@ class DirectoryContentViewModel : ViewModel() {
     }
 
 
-    // 2) Обновлённый generatePreviewWithRetry — НЕ пишет в PreviewManager
     private suspend fun generatePreviewWithRetry(
         context: Context,
         archive: ArchiveInfo,
@@ -317,17 +316,15 @@ class DirectoryContentViewModel : ViewModel() {
                     archiveUri = archive.filePath.toUri()
                 ) { progress ->
                     viewModelScope.launch(Dispatchers.Main) {
-                        _currentPreviewProgress = "Обработка ($currentCount/$totalCount): $progress"
+                        _currentPreviewProgress = context.getString(R.string.preview_processing_with_progress, currentCount, totalCount, progress)
                     }
                 }
 
                 if (previewPath != null) {
                     val file = File(previewPath)
                     if (file.exists() && file.length() > 0) {
-                        // проверяем читаемость
                         file.inputStream().use { }
 
-                        // НЕ записываем в PreviewManager здесь — это делаем в конце одним батчем
                         Log.d(TAG, "Preview generated for ${archive.displayName}: $previewPath (attempt ${attempt + 1})")
                         return previewPath
                     } else {
@@ -355,12 +352,10 @@ class DirectoryContentViewModel : ViewModel() {
     }
 
 
-    // 3) Новая функция: перечитывает превью из PreviewManager и обновляет in-memory список
     private suspend fun reloadAllPreviews(
         context: Context,
         onUpdateArchives: ((List<ArchiveInfo>) -> Unit)? = null
     ) {
-        // читаем в IO
         val refreshed = withContext(Dispatchers.IO) {
             _archivesWithPreviews.map { archive ->
                 try {
@@ -384,7 +379,6 @@ class DirectoryContentViewModel : ViewModel() {
             }
         }
 
-        // атомарно применяем обновление и уведомляем UI
         archivesUpdateMutex.withLock {
             withContext(Dispatchers.Main) {
                 _archivesWithPreviews = refreshed
@@ -424,7 +418,7 @@ class DirectoryContentViewModel : ViewModel() {
         suspend fun scanRecursive(uri: android.net.Uri) {
             try {
                 if (scannedCount % 10 == 0) {
-                    _currentPreviewProgress = "Сканирование... найдено архивов: ${allArchives.size}"
+                    _currentPreviewProgress = context.getString(R.string.preview_scanning_found_archives, allArchives.size)
                     yield()
                 }
 
@@ -442,7 +436,7 @@ class DirectoryContentViewModel : ViewModel() {
                             allArchives.add(archiveInfo)
 
                             if (allArchives.size % 5 == 0) {
-                                _currentPreviewProgress = "Сканирование... найдено архивов: ${allArchives.size}"
+                                _currentPreviewProgress = context.getString(R.string.preview_scanning_found_archives, allArchives.size)
                                 yield()
                             }
                         }

@@ -49,7 +49,7 @@ fun NavigationBreadcrumbs(
                     ) {
                         Text(
                             text = name,
-                            style = MaterialTheme.typography.titleSmall,
+                            style = MaterialTheme.typography.bodySmall,
                             color = if (isLast)
                                 MaterialTheme.colorScheme.onSurfaceVariant
                             else

@@ -152,4 +152,13 @@
     <string name="directories_root">Directories</string>
     <string name="read">Read</string>
 
+    <string name="preview_scanning_directory">Scanning directory…</string>
+    <string name="preview_all_already_generated">All previews already generated</string>
+    <string name="preview_generation_complete">Completed! Processed %1$d archives</string>
+    <string name="preview_generation_cancelled">Generation cancelled</string>
+    <string name="preview_generation_error">Preview generation error: %1$s</string>
+    <string name="preview_processing_archive">Processing (%1$d/%2$d): %3$s</string>
+    <string name="preview_processing_with_progress">Processing (%1$d/%2$d): %3$s</string>
+    <string name="preview_scanning_found_archives">Scanning… archives found: %1$d</string>
+
 </resources>

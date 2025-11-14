@@ -151,5 +151,14 @@
     <string name="directories_root">Директории</string>
     <string name="read">Прочитано</string>
 
+    <string name="preview_scanning_directory">Сканирование директории…</string>
+    <string name="preview_all_already_generated">Все превью уже сгенерированы</string>
+    <string name="preview_generation_complete">Завершено! Обработано %1$d архивов</string>
+    <string name="preview_generation_cancelled">Генерация отменена</string>
+    <string name="preview_generation_error">Ошибка при генерации превью: %1$s</string>
+    <string name="preview_processing_archive">Обработка (%1$d/%2$d): %3$s</string>
+    <string name="preview_processing_with_progress">Обработка (%1$d/%2$d): %3$s</string>
+    <string name="preview_scanning_found_archives">Сканирование… найдено архивов: %1$d</string>
+
 
 </resources>

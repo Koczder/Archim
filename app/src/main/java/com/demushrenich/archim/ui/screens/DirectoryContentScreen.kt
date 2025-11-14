@@ -182,6 +182,7 @@ fun DirectoryContentScreen(
             TopAppBar(
                 title = {
                     Column {
+                        Text(currentDirName)
                         navigationState?.let { navState ->
                             NavigationBreadcrumbs(navState, Modifier.padding(top = 2.dp))
                         }
