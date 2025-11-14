@@ -138,19 +138,6 @@ class DirectoryContentViewModel : ViewModel() {
         handledDirectories.remove(directoryUri)
     }
 
-    fun sortArchives(sortType: SortType, onUpdateArchives: ((List<ArchiveInfo>) -> Unit)?) {
-        viewModelScope.launch {
-            val sortedArchives = withContext(Dispatchers.Default) {
-                SortingUtils.sortArchives(_archivesWithPreviews, sortType)
-            }
-
-            _archivesWithPreviews = sortedArchives
-            onUpdateArchives?.invoke(sortedArchives)
-
-            Log.d(TAG, "Archives sorted by: $sortType")
-        }
-    }
-
     fun generatePreviewsForAllArchives(
         context: Context?,
         currentDirUri: String,
