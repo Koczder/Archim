@@ -1,5 +1,6 @@
 package com.demushrenich.archim
 
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -26,6 +27,10 @@ import com.demushrenich.archim.ui.screens.LoadingScreen
 import com.demushrenich.archim.ui.screens.DirectoriesPageScreen
 import com.demushrenich.archim.ui.screens.SettingsScreen
 import androidx.lifecycle.viewmodel.compose.viewModel
+import coil.Coil
+import coil.ImageLoader
+import coil.decode.GifDecoder
+import coil.decode.ImageDecoderDecoder
 import com.demushrenich.archim.data.AppUiState
 import com.demushrenich.archim.data.utils.clearCacheDir
 import com.demushrenich.archim.data.utils.clearLargeArchiveCache
@@ -42,6 +47,18 @@ class MainActivity : ComponentActivity() {
             clearLargeArchiveCache(this@MainActivity)
             clearCacheDir(this@MainActivity)
         }
+
+        val imageLoader = ImageLoader.Builder(this)
+            .components {
+                if (Build.VERSION.SDK_INT >= 28) {
+                    add(ImageDecoderDecoder.Factory())
+                } else {
+                    add(GifDecoder.Factory())
+                }
+            }
+            .build()
+
+        Coil.setImageLoader(imageLoader)
 
         enableEdgeToEdge()
 

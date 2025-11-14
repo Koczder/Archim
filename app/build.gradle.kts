@@ -12,8 +12,8 @@ android {
         applicationId = "com.demushrenich.archim"
         minSdk = 24
         targetSdk = 36
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = 2
+        versionName = "0.5.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -55,6 +55,7 @@ dependencies {
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
     implementation("io.coil-kt:coil-compose:2.7.0")
+    implementation("io.coil-kt:coil-gif:2.7.0")
     implementation("com.github.omicronapps:7-Zip-JBinding-4Android:Release-16.02-2.02")
     implementation("androidx.documentfile:documentfile:1.1.0")
     implementation("com.google.code.gson:gson:2.13.1")
