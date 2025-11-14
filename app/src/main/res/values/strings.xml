@@ -1,0 +1,155 @@
+<resources>
+    <string name="app_name">Archim</string>
+
+    <string name="settings">Settings</string>
+    <string name="language">Language</string>
+    <string name="language_system">System Default</string>
+    <string name="language_english">English</string>
+    <string name="language_russian">Русский</string>
+
+    <!-- Common -->
+    <string name="cancel">Cancel</string>
+    <string name="ok">OK</string>
+    <string name="close">Close</string>
+
+    <string name="reading_direction">Reading Direction</string>
+    <string name="left_to_right">Left to Right</string>
+    <string name="right_to_left">Right to Left</string>
+    <string name="preview_generation">Preview Generation</string>
+    <string name="preview_mode_dialog">Dialog Box</string>
+    <string name="preview_mode_auto">Auto Generation</string>
+    <string name="preview_mode_manual">Button Only</string>
+
+    <string name="pick_archive">Pick an archive with images</string>
+
+    <string name="directories">Directories</string>
+    <string name="open_archive">Open archive</string>
+
+    <string name="cleanup_section_title">Cache Cleanup</string>
+    <string name="cleanup_orphaned_previews">Clear Orphaned Previews</string>
+
+    <!-- Settings Groups -->
+    <string name="settings_group_general">General</string>
+    <string name="settings_group_viewer">Viewer</string>
+    <string name="settings_group_archives">Archives</string>
+    <string name="settings_group_grid">Grid</string>
+
+    <!-- Updated keys for code synchronization -->
+    <string name="settings_language">Language</string>
+    <string name="settings_reading_direction">Reading Direction</string>
+    <string name="reading_direction_ltr">Left to Right</string>
+    <string name="reading_direction_rtl">Right to Left</string>
+    <string name="settings_preview_generation">Preview Generation</string>
+    <string name="settings_archive_corners">Archive Preview Corners</string>
+    <string name="settings_grid_corners">Image Corners in Grid</string>
+    <string name="settings_archive_open_mode">Opening Archives with Progress</string>
+    <string name="settings_cleanup_cache">Cache Cleanup</string>
+    <string name="settings_cleanup_button">Clean Up Orphaned Previews</string>
+
+    <!-- Corner Style Settings -->
+    <string name="corner_style_rounded">Rounded</string>
+    <string name="corner_style_square">Square</string>
+
+    <!-- Archive Open Mode Settings -->
+    <string name="archive_open_mode_grid">Show Grid</string>
+    <string name="archive_open_mode_continue">Continue Reading</string>
+    <string name="change_background">Change background</string>
+    <string name="extracting_archive">Extracting archive</string>
+    <string name="create_preview">Create preview</string>
+    <string name="back">Back</string>
+    <string name="continue_read">Continue</string>
+    <string name="copy">Copy</string>
+    <string name="reading_complete">Reading complete</string>
+    <string name="reading_progress">Reading progress</string>
+    <string name="floader">Folder</string>
+    <string name="last_image_on_level">Last on level</string>
+    <string name="add_directory">Add directory</string>
+    <string name="delete_directory">Delete directory</string>
+
+    <string name="delete_directory_confirm">Are you sure you want to delete the directory "%1$s"?</string>
+    <string name="archives_counting">Counting archives…</string>
+    <string name="deleting_data">Deleting data…</string>
+    <string name="will_delete_previews">Previews and reading progress will be deleted</string>
+    <string name="keep_previews">Previews and reading progress will be kept</string>
+    <string name="delete_previews_checkbox">Delete previews and reading progress for archives</string>
+    <string name="counting_in_progress">Counting…</string>
+    <string name="deleting_in_progress">Deleting…</string>
+    <string name="delete">Delete</string>
+    <string name="cancel_delete">Cancel</string>
+    <string name="date_label">Date: %1$s</string>
+    <string name="new_label">NEW</string>
+
+    <!-- DirectoryContentScreen -->
+    <string name="folders">Folders</string>
+    <string name="archives">Archives</string>
+
+    <string name="generate_previews">Generate previews</string>
+    <string name="clear_preview">Clear preview</string>
+    <string name="regenerate_preview">Regenerate preview</string>
+    <string name="clear_progress">Clear progress</string>
+
+    <string name="failed_to_load_image">Failed to load image</string>
+    <string name="preview_write_error">Preview write error</string>
+    <string name="preview_created_success">Preview created successfully</string>
+    <string name="image_copied">Image copied</string>
+    <string name="copy_error">Copy error: %1$s</string>
+    <string name="preview_creation_error">Preview creation error: %1$s</string>
+
+    <string name="clipboard_image_label">Image</string>
+    <string name="no_image_data">No image data</string>
+
+    <string name="password_dialog_title">Password required</string>
+    <string name="password_dialog_message">The archive is password-protected. Please enter the password to continue:</string>
+    <string name="password_label">Password</string>
+    <string name="password_placeholder">Enter password</string>
+
+    <string name="sort_by_name">Sort by name</string>
+    <string name="sort_by_date">Sort by date</string>
+    <string name="sort_ascending">Ascending</string>
+    <string name="sort_descending">Descending</string>
+
+    <string name="preview_generation_dialog_title">Generate preview?</string>
+    <string name="preview_generation_dialog_message">You opened a new directory. Would you like to generate image previews for all archives in this folder?</string>
+    <string name="yes">Yes</string>
+    <string name="no">No</string>
+
+    <string name="loading">Loading…</string>
+
+    <string name="enter_password">Enter password</string>
+
+    <string name="sort_menu_label">Sort</string>
+    <string name="sort_by_progress">By progress</string>
+    <string name="sort_by_last_opened">By last opened</string>
+
+    <string name="previews_deleted">Deleted previews: %1$d</string>
+    <string name="cleanup_error">Cleanup error: %1$s</string>
+    <string name="cache_cleared">All cache cleared</string>
+    <string name="cache_clear_error">Cache clear error</string>
+    <string name="unsupported_archive_format">Unsupported archive format</string>
+    <string name="no_images_in_archive">No images found in archive</string>
+    <string name="invalid_password">Invalid password</string>
+    <string name="archive_extraction_error">Archive extraction error: %1$s</string>
+    <string name="loading_error">Loading error: %1$s</string>
+
+    <string name="default_folder_name">Folder</string>
+    <string name="no_name">No name</string>
+
+    <string name="extracting_opening_archive">Opening archive…</string>
+    <string name="extracting_finding_first_image">Looking for first image…</string>
+    <string name="extracting_extracting_file">Extracting: %1$s</string>
+    <string name="extracting_no_images_found">No images found</string>
+    <string name="extracting_analyzing_content">Analyzing content…</string>
+    <string name="extracting_skipping_file">Skipping: %1$s</string>
+    <string name="extracting_unpacking_file">Unpacking: %1$s</string>
+    <string name="extracting_done">Done</string>
+
+    <string name="preview_generating">Generating preview…</string>
+    <string name="preview_creating_from_file">Creating preview from: %1$s</string>
+    <string name="preview_image_read_failed">Failed to read image</string>
+    <string name="preview_password_protected">Archive is password-protected</string>
+    <string name="preview_error_with_message">Error: %1$s</string>
+
+    <string name="directories_root">Directories</string>
+    <string name="read">Read</string>
+
+</resources>

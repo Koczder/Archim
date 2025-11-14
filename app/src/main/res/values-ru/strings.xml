@@ -1,0 +1,155 @@
+<resources>
+    <string name="app_name">Archim</string>
+
+    <string name="settings">Настройки</string>
+    <string name="language">Язык</string>
+    <string name="language_system">Системный</string>
+    <string name="language_english">English</string>
+    <string name="language_russian">Русский</string>
+
+    <!-- Common -->
+    <string name="cancel">Отмена</string>
+    <string name="ok">ОК</string>
+    <string name="close">Закрыть</string>
+
+    <string name="reading_direction">Направление чтения</string>
+    <string name="left_to_right">Слева направо</string>
+    <string name="right_to_left">Справа налево</string>
+    <string name="preview_generation">Генерация превью</string>
+    <string name="preview_mode_dialog">Диалоговое окно</string>
+    <string name="preview_mode_auto">Автогенерация</string>
+    <string name="preview_mode_manual">Только с кнопки</string>
+
+    <string name="pick_archive">Выбрать архив с изображениями</string>
+
+    <string name="directories">Директории</string>
+    <string name="open_archive">Открыть архив</string>
+
+    <string name="cleanup_section_title">Очистка кэша</string>
+    <string name="cleanup_orphaned_previews">Очистить лишние превью</string>
+
+    <!-- Settings Groups -->
+    <string name="settings_group_general">Общее</string>
+    <string name="settings_group_viewer">Просмотрщик</string>
+    <string name="settings_group_archives">Архивы</string>
+    <string name="settings_group_grid">Сетка</string>
+
+    <!-- Обновлённые ключи для синхронизации с кодом -->
+    <string name="settings_language">Язык</string>
+    <string name="settings_reading_direction">Направление чтения</string>
+    <string name="reading_direction_ltr">Слева направо</string>
+    <string name="reading_direction_rtl">Справа налево</string>
+    <string name="settings_preview_generation">Генерация превью</string>
+    <string name="settings_archive_corners">Углы превью архивов</string>
+    <string name="settings_grid_corners">Углы изображений в сетке</string>
+    <string name="settings_archive_open_mode">Открытие архива с прогрессом</string>
+    <string name="settings_cleanup_cache">Очистка кеша</string>
+    <string name="settings_cleanup_button">Очистить лишние превью</string>
+
+    <!-- Corner Style Settings -->
+    <string name="corner_style_rounded">Закруглённые</string>
+    <string name="corner_style_square">Квадратные</string>
+
+    <!-- Archive Open Mode Settings -->
+    <string name="archive_open_mode_grid">Показать сетку</string>
+    <string name="archive_open_mode_continue">Продолжить</string>
+    <string name="change_background">Сменить фон</string>
+    <string name="extracting_archive">Извлечение архива</string>
+    <string name="create_preview">Сделать превью</string>
+    <string name="back">Назад</string>
+    <string name="continue_read">Продолжить</string>
+    <string name="copy">Копировать</string>
+    <string name="reading_complete">Чтение завершено</string>
+    <string name="reading_progress">Прогресс чтения</string>
+    <string name="floader">Папка</string>
+    <string name="last_image_on_level">Последнее на уровне</string>
+    <string name="add_directory">Добавить директорию</string>
+    <string name="delete_directory">Удалить директорию</string>
+
+    <string name="delete_directory_confirm">Вы действительно хотите удалить директорию "%1$s"?</string>
+    <string name="archives_counting">Подсчет архивов…</string>
+    <string name="deleting_data">Удаление данных…</string>
+    <string name="will_delete_previews">Будут удалены превью и прогресс прочтения</string>
+    <string name="keep_previews">Превью и прогресс прочтения останутся</string>
+    <string name="delete_previews_checkbox">Удалить превью и прогресс чтения для архивов</string>
+    <string name="counting_in_progress">Идёт подсчёт…</string>
+    <string name="deleting_in_progress">Удаление…</string>
+    <string name="delete">Удалить</string>
+    <string name="cancel_delete">Отмена</string>
+    <string name="date_label">Дата: %1$s</string>
+    <string name="new_label">NEW</string>
+
+    <!-- DirectoryContentScreen -->
+    <string name="folders">Папки</string>
+    <string name="archives">Архивы</string>
+
+    <string name="generate_previews">Генерация превью</string>
+    <string name="clear_preview">Очистить превью</string>
+    <string name="regenerate_preview">Пересоздать превью</string>
+    <string name="clear_progress">Очистить прогресс</string>
+
+    <string name="failed_to_load_image">Не удалось загрузить изображение</string>
+    <string name="preview_write_error">Ошибка записи превью</string>
+    <string name="preview_created_success">Превью создано успешно</string>
+    <string name="image_copied">Изображение скопировано</string>
+    <string name="copy_error">Ошибка при копировании: %1$s</string>
+    <string name="preview_creation_error">Ошибка при создании превью: %1$s</string>
+    <string name="clipboard_image_label">Изображение</string>
+    <string name="no_image_data">Нет данных изображения</string>
+
+    <string name="password_dialog_title">Требуется пароль</string>
+    <string name="password_dialog_message">Архив защищён паролем. Введите пароль для продолжения:</string>
+    <string name="password_label">Пароль</string>
+    <string name="password_placeholder">Введите пароль</string>
+
+    <string name="sort_by_name">Сортировать по имени</string>
+    <string name="sort_by_date">Сортировать по дате</string>
+    <string name="sort_ascending">По возрастанию</string>
+    <string name="sort_descending">По убыванию</string>
+
+    <string name="preview_generation_dialog_title">Создать превью?</string>
+    <string name="preview_generation_dialog_message">Вы открыли новую директорию. Хотите создать превью изображений для всех архивов в этой папке?</string>
+    <string name="yes">Да</string>
+    <string name="no">Нет</string>
+
+    <string name="loading">Загрузка…</string>
+
+    <string name="enter_password">Ввести пароль</string>
+
+    <string name="sort_menu_label">Сортировка</string>
+    <string name="sort_by_progress">По прогрессу</string>
+    <string name="sort_by_last_opened">По последнему открытию</string>
+
+    <string name="previews_deleted">Удалено превью: %1$d</string>
+    <string name="cleanup_error">Ошибка при очистке: %1$s</string>
+    <string name="cache_cleared">Весь кэш очищен</string>
+    <string name="cache_clear_error">Ошибка очистки кэша</string>
+    <string name="unsupported_archive_format">Неподдерживаемый формат архива</string>
+    <string name="no_images_in_archive">В архиве не найдено изображений</string>
+    <string name="invalid_password">Неверный пароль</string>
+    <string name="archive_extraction_error">Ошибка при извлечении архива: %1$s</string>
+    <string name="loading_error">Ошибка загрузки: %1$s</string>
+
+    <string name="default_folder_name">Папка</string>
+    <string name="no_name">Без имени</string>
+
+    <string name="extracting_opening_archive">Открытие архива…</string>
+    <string name="extracting_finding_first_image">Поиск первого изображения…</string>
+    <string name="extracting_extracting_file">Извлечение: %1$s</string>
+    <string name="extracting_no_images_found">Изображения не найдены</string>
+    <string name="extracting_analyzing_content">Анализ содержимого…</string>
+    <string name="extracting_skipping_file">Пропуск: %1$s</string>
+    <string name="extracting_unpacking_file">Распаковка: %1$s</string>
+    <string name="extracting_done">Завершено</string>
+
+    <string name="preview_generating">Генерация превью…</string>
+    <string name="preview_creating_from_file">Создание превью из: %1$s</string>
+    <string name="preview_image_read_failed">Не удалось прочитать изображение</string>
+    <string name="preview_password_protected">Архив защищён паролем</string>
+    <string name="preview_error_with_message">Ошибка: %1$s</string>
+
+    <string name="directories_root">Директории</string>
+    <string name="read">Прочитано</string>
+
+
+</resources>
