@@ -1,5 +1,7 @@
 *.iml
 .gradle
+.kotlin/errors
+.kotlin/git add .gitignore
 /local.properties
 /.idea/caches
 /.idea/libraries
