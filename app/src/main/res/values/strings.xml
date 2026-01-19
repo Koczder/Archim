@@ -161,4 +161,6 @@
     <string name="preview_processing_with_progress">Processing (%1$d/%2$d): %3$s</string>
     <string name="preview_scanning_found_archives">Scanning… archives found: %1$d</string>
 
+    <string name="copy_name">Copy Name</string>
+
 </resources>

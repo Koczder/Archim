@@ -160,5 +160,7 @@
     <string name="preview_processing_with_progress">Обработка (%1$d/%2$d): %3$s</string>
     <string name="preview_scanning_found_archives">Сканирование… найдено архивов: %1$d</string>
 
+    <string name="copy_name">Скопировать название</string>
+
 
 </resources>

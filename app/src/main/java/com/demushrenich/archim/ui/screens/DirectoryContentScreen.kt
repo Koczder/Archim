@@ -15,8 +15,10 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.ImageLoader
@@ -75,7 +77,7 @@ fun DirectoryContentScreen(
         LazyListState(firstVisibleItemIndex = saved.index, firstVisibleItemScrollOffset = saved.offset)
     }
 
-
+    val clipboardManager = LocalClipboardManager.current
 
     BackHandler {
         viewModel.saveScroll(currentDirUri, listState.firstVisibleItemIndex, listState.firstVisibleItemScrollOffset)
@@ -417,6 +419,14 @@ fun DirectoryContentScreen(
 
             ContextMenu(state = contextMenuState) { item ->
                 val archive = item as? ArchiveInfo ?: return@ContextMenu
+
+                ContextMenuItem(
+                    text = stringResource(R.string.copy_name),
+                    onClick = {
+                        clipboardManager.setText(AnnotatedString(archive.originalName))
+                        contextMenuState.hide()
+                    }
+                )
 
                 ContextMenuItem(
                     text = stringResource(R.string.clear_preview),
