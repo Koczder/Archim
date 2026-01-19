@@ -26,7 +26,6 @@
             </intent-filter>
         </activity>
 
-        <!-- FileProvider для безопасного доступа к файлам в кеше -->
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.fileprovider"

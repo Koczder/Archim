@@ -9,7 +9,7 @@ import androidx.documentfile.provider.DocumentFile
 import com.demushrenich.archim.data.ArchiveInfo
 import com.demushrenich.archim.data.DirectoryArchivesInfo
 import com.demushrenich.archim.data.DirectoryItem
-import com.demushrenich.archim.data.utils.isSupportedArchive
+import com.demushrenich.archim.domain.utils.isSupportedArchive
 import com.demushrenich.archim.domain.SortType
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken

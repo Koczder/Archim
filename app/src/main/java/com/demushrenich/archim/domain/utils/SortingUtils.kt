@@ -1,4 +1,4 @@
-package com.demushrenich.archim.data.utils
+package com.demushrenich.archim.domain.utils
 
 import com.demushrenich.archim.data.ArchiveInfo
 import com.demushrenich.archim.domain.ImageItem

@@ -1,6 +1,6 @@
 package com.demushrenich.archim
 
-import com.demushrenich.archim.data.utils.SortingUtils
+import com.demushrenich.archim.domain.utils.SortingUtils
 import com.demushrenich.archim.domain.ImageItem
 import com.demushrenich.archim.domain.SortCategory
 import com.demushrenich.archim.domain.SortType

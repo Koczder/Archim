@@ -53,7 +53,7 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.ui.res.stringResource
 import com.demushrenich.archim.R
-import com.demushrenich.archim.data.utils.ImageViewerUtils
+import com.demushrenich.archim.domain.utils.ImageViewerUtils
 
 @Composable
 fun SetStatusBarVisible(visible: Boolean) {
@@ -173,7 +173,9 @@ fun ImageViewerScreen(
 
     PreloadAdjacentImages(imagesList, filteredSelectedImageIndex ?: 0)
 
-    BackHandler { onBack() }
+    BackHandler(enabled = true) {
+        onBack()
+    }
 
     Box(
         Modifier

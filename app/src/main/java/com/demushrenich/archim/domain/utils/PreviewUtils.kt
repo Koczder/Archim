@@ -1,4 +1,4 @@
-package com.demushrenich.archim.data.utils
+package com.demushrenich.archim.domain.utils
 
 import android.annotation.SuppressLint
 import android.content.Context

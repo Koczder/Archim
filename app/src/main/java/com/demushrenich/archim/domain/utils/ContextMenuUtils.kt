@@ -1,4 +1,4 @@
-package com.demushrenich.archim.data.utils
+package com.demushrenich.archim.domain.utils
 
 import android.content.ClipData
 import android.content.ClipboardManager
@@ -7,7 +7,6 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
 import android.widget.Toast
-import androidx.compose.ui.res.stringResource
 import androidx.core.content.FileProvider
 
 import androidx.documentfile.provider.DocumentFile

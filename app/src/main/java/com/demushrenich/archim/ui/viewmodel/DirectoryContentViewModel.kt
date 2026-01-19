@@ -11,8 +11,8 @@ import com.demushrenich.archim.data.*
 import com.demushrenich.archim.data.managers.ArchiveStructureManager
 import com.demushrenich.archim.data.managers.DirectoryManager
 import com.demushrenich.archim.data.managers.PreviewManager
-import com.demushrenich.archim.data.utils.SortingUtils
-import com.demushrenich.archim.data.utils.generatePreviewForArchive
+import com.demushrenich.archim.domain.utils.SortingUtils
+import com.demushrenich.archim.domain.utils.generatePreviewForArchive
 import com.demushrenich.archim.domain.PreviewGenerationMode
 import com.demushrenich.archim.domain.SortType
 import kotlinx.coroutines.*
@@ -23,6 +23,7 @@ import java.io.File
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.math.min
 import com.demushrenich.archim.R
+import com.demushrenich.archim.domain.utils.ArchiveFormats
 
 class DirectoryContentViewModel : ViewModel() {
 
@@ -334,10 +335,8 @@ class DirectoryContentViewModel : ViewModel() {
                 }
             }
         }
-
         return null
     }
-
 
     private suspend fun reloadAllPreviews(
         context: Context,
@@ -441,9 +440,7 @@ class DirectoryContentViewModel : ViewModel() {
     private fun isArchiveFile(fileName: String?): Boolean {
         if (fileName == null) return false
         val extension = fileName.substringAfterLast('.', "").lowercase()
-        return extension in setOf("7z","zip","rar","tar","bz2","xz","lzma",
-            "cab","iso","arj","lzh","chm","cpio","deb","rpm",
-            "wim","xar","z", "cbz", "cbr", "cb7")
+        return ArchiveFormats.SUPPORTED_EXTENSIONS.contains(extension)
     }
 
     private fun createArchiveInfo(context: Context, file: DocumentFile): ArchiveInfo {
@@ -466,9 +463,9 @@ class DirectoryContentViewModel : ViewModel() {
 
     fun regeneratePreviewForArchive(context: Context, archive: ArchiveInfo) {
         Log.d(TAG, "regeneratePreviewForArchive: ${archive.displayName}")
+        clearPreviewForArchive(context, archive)
         viewModelScope.launch {
             generatePreviewForArchive(context = context, archiveUri = archive.filePath.toUri())?.let { previewPath ->
-                removeLoadedImage(archive.filePath)
                 _archivesWithPreviews = _archivesWithPreviews.map {
                     if (it.filePath == archive.filePath) it.copy(previewPath = previewPath) else it
                 }

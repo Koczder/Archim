@@ -2,7 +2,8 @@ package com.demushrenich.archim.data
 
 import com.demushrenich.archim.domain.ImageItem
 import androidx.compose.runtime.*
-import com.demushrenich.archim.data.managers.ArchiveTreeBuilder
+import com.demushrenich.archim.domain.utils.ArchiveNode
+import com.demushrenich.archim.domain.utils.ArchiveTreeBuilder
 
 data class ArchiveLevel(
     val path: String,
@@ -12,16 +13,18 @@ data class ArchiveLevel(
 
 data class ScrollPosition(val index: Int, val offset: Int)
 
-
 class ArchiveNavigationState(private val allItems: List<ImageItem>) {
     private val _levels = mutableStateMapOf<Int, ArchiveLevel>()
     private var _currentLevel by mutableIntStateOf(0)
     val allImages: List<ImageItem> = createOrderedImageList(allItems)
 
+    // Построим дерево один раз при инициализации
+    private val tree: ArchiveNode = ArchiveTreeBuilder.buildTree(allItems)
+
     fun getCurrentLevel(): ArchiveLevel? = _levels[_currentLevel]
 
     fun setRootLevel(skipAutoNavigation: Boolean = false) {
-        val entries = ArchiveTreeBuilder.buildHierarchy(allItems, "")
+        val entries = ArchiveTreeBuilder.getChildrenAtPath(tree, "")
         _levels[0] = ArchiveLevel(
             path = "",
             displayName = "/",
@@ -40,7 +43,7 @@ class ArchiveNavigationState(private val allItems: List<ImageItem>) {
     }
 
     fun navigateToNext(folder: ImageItem, skipAutoNavigation: Boolean = false) {
-        val entries = ArchiveTreeBuilder.buildHierarchy(allItems, folder.archivePath)
+        val entries = ArchiveTreeBuilder.getChildrenAtPath(tree, folder.archivePath)
         val nextLevel = _currentLevel + 1
         _levels[nextLevel] = ArchiveLevel(
             path = folder.archivePath,

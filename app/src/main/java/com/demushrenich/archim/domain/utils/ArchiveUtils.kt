@@ -1,4 +1,4 @@
-package com.demushrenich.archim.data.utils
+package com.demushrenich.archim.domain.utils
 
 import android.content.Context
 import android.net.Uri
@@ -10,7 +10,6 @@ import kotlinx.coroutines.ensureActive
 import net.sf.sevenzipjbinding.ExtractOperationResult
 import net.sf.sevenzipjbinding.SevenZip
 import java.io.File
-import com.demushrenich.archim.data.managers.DirectoryManager
 import com.demushrenich.archim.domain.ImageItem
 
 class PasswordRequiredException : Exception("Archive requires password")
@@ -20,13 +19,6 @@ class ExtractionCancelledException : Exception("Extraction cancelled")
 fun isImageFile(filename: String): Boolean {
     val exts = listOf("png","jpg","jpeg","webp","bmp","heif","heic","gif","tiff","tif")
     return exts.any { filename.lowercase().endsWith(".$it") }
-}
-
-fun isSupportedArchive(extension: String): Boolean {
-    val formats = setOf("7z","zip","rar","tar","bz2","xz","lzma",
-        "cab","iso","arj","lzh","chm","cpio","deb","rpm",
-        "wim","xar","z", "cbz", "cbr", "cb7")
-    return formats.contains(extension)
 }
 
 fun getFileExtension(uri: Uri): String =

@@ -32,8 +32,9 @@ import coil.ImageLoader
 import coil.decode.GifDecoder
 import coil.decode.ImageDecoderDecoder
 import com.demushrenich.archim.data.AppUiState
-import com.demushrenich.archim.data.utils.clearCacheDir
-import com.demushrenich.archim.data.utils.clearLargeArchiveCache
+import com.demushrenich.archim.data.managers.SettingsManager
+import com.demushrenich.archim.domain.utils.clearCacheDir
+import com.demushrenich.archim.domain.utils.clearLargeArchiveCache
 import com.demushrenich.archim.ui.screens.ImageGridScreen
 import com.demushrenich.archim.ui.screens.ImageViewerScreen
 import com.demushrenich.archim.ui.dialogs.PasswordDialog
@@ -43,9 +44,14 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        lifecycleScope.launch(Dispatchers.IO) {
-            clearLargeArchiveCache(this@MainActivity)
-            clearCacheDir(this@MainActivity)
+        val settingsManager = SettingsManager(this)
+        settingsManager.initializeLanguage()
+
+        if (savedInstanceState == null) {
+            lifecycleScope.launch(Dispatchers.IO) {
+                clearLargeArchiveCache(this@MainActivity)
+                clearCacheDir(this@MainActivity)
+            }
         }
 
         val imageLoader = ImageLoader.Builder(this)

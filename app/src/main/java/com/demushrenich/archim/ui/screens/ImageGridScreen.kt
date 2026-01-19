@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.itemsIndexed
-import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ContentCopy
@@ -40,7 +39,7 @@ import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.res.stringResource
 import com.demushrenich.archim.R
 import com.demushrenich.archim.SortingComponent
-import com.demushrenich.archim.data.utils.SortingUtils
+import com.demushrenich.archim.domain.utils.SortingUtils
 import com.demushrenich.archim.data.AppUiState
 import com.demushrenich.archim.domain.ImageItem
 import com.demushrenich.archim.domain.ReadingDirection

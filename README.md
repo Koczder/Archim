@@ -38,7 +38,7 @@ Archim is a lightweight Android application designed for seamless viewing of ima
 - Passwords are **never stored** — entered only when needed
 
 ### 🌍 Localization
-- **English** & **Русский **
+- **English** & **Русский**
 
 > Supported image formats: JPG, PNG, WEBP, GIF (animated), BMP
 

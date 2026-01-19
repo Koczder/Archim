@@ -1,4 +1,4 @@
-package com.demushrenich.archim.data.utils
+package com.demushrenich.archim.domain.utils
 
 import net.sf.sevenzipjbinding.IInStream
 import net.sf.sevenzipjbinding.SevenZipException

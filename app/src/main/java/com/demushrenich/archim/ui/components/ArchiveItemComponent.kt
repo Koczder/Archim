@@ -8,7 +8,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -17,6 +16,7 @@ import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
 import com.demushrenich.archim.data.ArchiveInfo
 import com.demushrenich.archim.domain.CornerStyle
+import com.demushrenich.archim.domain.utils.archiveFormat
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*
@@ -91,7 +91,7 @@ fun ArchiveItemComponent(
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = "ZIP",
+                        text = archiveFormat(archive),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -134,7 +134,7 @@ fun ArchiveItemComponent(
                     modifier = Modifier.fillMaxWidth()
                 )
                 Text(
-                    text = "${progress.currentIndex + 1} / ${progress.totalImages}",
+                    text = "${progress.currentIndex + 0} / ${progress.totalImages}",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

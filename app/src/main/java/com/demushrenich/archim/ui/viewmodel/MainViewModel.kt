@@ -22,15 +22,15 @@ import com.demushrenich.archim.data.managers.ArchiveStructureManager
 import com.demushrenich.archim.data.managers.DirectoryManager
 import com.demushrenich.archim.data.managers.PreviewManager
 import com.demushrenich.archim.data.managers.SettingsManager
-import com.demushrenich.archim.data.utils.PasswordRequiredException
-import com.demushrenich.archim.data.utils.SortingUtils
-import com.demushrenich.archim.data.utils.WrongPasswordException
-import com.demushrenich.archim.data.utils.clearLargeArchiveCache
-import com.demushrenich.archim.data.utils.copyImageToClipboard
-import com.demushrenich.archim.data.utils.extractImagesFromArchive
-import com.demushrenich.archim.data.utils.generatePreviewFromImage
-import com.demushrenich.archim.data.utils.getFileExtension
-import com.demushrenich.archim.data.utils.isSupportedArchive
+import com.demushrenich.archim.domain.utils.PasswordRequiredException
+import com.demushrenich.archim.domain.utils.SortingUtils
+import com.demushrenich.archim.domain.utils.WrongPasswordException
+import com.demushrenich.archim.domain.utils.clearLargeArchiveCache
+import com.demushrenich.archim.domain.utils.copyImageToClipboard
+import com.demushrenich.archim.domain.utils.extractImagesFromArchive
+import com.demushrenich.archim.domain.utils.generatePreviewFromImage
+import com.demushrenich.archim.domain.utils.getFileExtension
+import com.demushrenich.archim.domain.utils.isSupportedArchive
 import com.demushrenich.archim.utils.clearArchiveImagesFromCache
 
 
@@ -358,7 +358,6 @@ class MainViewModel : ViewModel() {
         }
     }
 
-
     private fun handleArchiveLoaded(context: Context, uri: Uri, images: List<ImageItem>) {
         val archiveNavState = ArchiveNavigationState(images)
         archiveNavState.setRootLevel()
@@ -373,6 +372,16 @@ class MainViewModel : ViewModel() {
             val fileSize = documentFile?.length() ?: 0L
 
             if (fileSize > 0) {
+                val totalImages = archiveNavState.allImages.size
+                PreviewManager.saveReadingProgressForPreview(
+                    context = context,
+                    archiveUri = uri.toString(),
+                    fileName = fileName,
+                    fileSize = fileSize,
+                    currentIndex = 0,
+                    totalImages = totalImages
+                )
+
                 val structure = ArchiveStructureManager.loadArchiveStructure(context, fileName, fileSize)
 
                 if (structure != null && structure.lastImageId != null) {
@@ -575,7 +584,6 @@ class MainViewModel : ViewModel() {
     fun removeNewDirectoryUri(uri: String) { newRootDirectoryUris.remove(uri) }
     fun canNavigateBackInArchive(): Boolean = archiveNavState?.canNavigateBack() == true
 
-
     private fun loadArchive(context: Context, uri: Uri, password: String?) {
         Log.d("ArchiveDebug", "loadArchive: setting currentArchiveFile to ${uri}")
         archiveStructureSaved = false
@@ -657,9 +665,6 @@ class MainViewModel : ViewModel() {
             }
         }
     }
-
-
-
 
     fun openDirectory(context: Context, item: DirectoryItem, isNewDirectory: Boolean) {
         viewModelScope.launch {
