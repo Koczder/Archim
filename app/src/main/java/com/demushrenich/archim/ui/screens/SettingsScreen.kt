@@ -548,6 +548,7 @@ private fun getLanguageDisplayName(language: Language): String {
         Language.SYSTEM -> stringResource(R.string.language_system)
         Language.ENGLISH -> stringResource(R.string.language_english)
         Language.RUSSIAN -> stringResource(R.string.language_russian)
+        Language.INTERSLAVIC -> stringResource(R.string.language_interslavic)
     }
 }
 

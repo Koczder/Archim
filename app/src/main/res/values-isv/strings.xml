@@ -1,0 +1,168 @@
+<resources>
+    <string name="app_name">Archim</string>
+
+    <string name="settings">Nastrojky</string>
+    <string name="language">Jezyk</string>
+    <string name="language_system">Sistemny Jezyk</string>
+    <string name="language_english">English</string>
+    <string name="language_russian">Русский</string>
+    <string name="language_interslavic">Medžuslovjansky</string>
+
+    <!-- Common -->
+    <string name="cancel">Anulacija</string>
+    <string name="ok">OK</string>
+    <string name="close">Zaključiti</string>
+
+    <string name="reading_direction">Směr čitaljnje</string>
+    <string name="left_to_right">Polěv-vpravo</string>
+    <string name="right_to_left">Poprav-vlěvo</string>
+    <string name="preview_generation">Stvorjenje podgleda</string>
+    <string name="preview_mode_dialog">Dialog</string>
+    <string name="preview_mode_auto">Avtomatično stvorjenje</string>
+    <string name="preview_mode_manual">Jedino s klaviše</string>
+
+    <string name="pick_archive">Izbrati arhiv</string>
+
+    <string name="directories">Direktoriji</string>
+    <string name="open_archive">Otvoriti arhiv</string>
+
+    <string name="cleanup_section_title">čistka keša</string>
+    <string name="cleanup_orphaned_previews">čistiti izbytočny podgledy</string>
+
+    <!-- Settings Groups -->
+    <string name="settings_group_general">Generalny</string>
+    <string name="settings_group_viewer">Gledatelj</string>
+    <string name="settings_group_archives">Arhivy</string>
+    <string name="settings_group_grid">Sětka</string>
+
+    <!-- Обновлённые ключи для синхронизации с кодом -->
+    <string name="settings_language">Jezyk</string>
+    <string name="settings_reading_direction">Směr čitaljnje</string>
+    <string name="reading_direction_ltr">Polěv-vpravo</string>
+    <string name="reading_direction_rtl">Poprav-vlěvo</string>
+    <string name="settings_preview_generation">Stvorjenje podgleda</string>
+    <string name="settings_archive_corners">Kutne podgleda archiva</string>
+    <string name="settings_grid_corners">Kutne izobraženja vo sětkě</string>
+    <string name="settings_archive_open_mode">Otvoriti arhiv s progresom</string>
+    <string name="settings_cleanup_cache">čistka keša</string>
+    <string name="settings_cleanup_button">čistiti izbytočny podgledy</string>
+
+    <!-- Corner Style Settings -->
+    <string name="corner_style_rounded">Krugle</string>
+    <string name="corner_style_square">Kvadratne</string>
+
+    <!-- Archive Open Mode Settings -->
+    <string name="archive_open_mode_grid">Pokazati sětkг</string>
+    <string name="archive_open_mode_continue">Prodolžiti</string>
+    <string name="change_background">Izměniti pozadje</string>
+    <string name="extracting_archive">Razpakovanje archiva</string>
+    <string name="create_preview">Izdělati podgled</string>
+    <string name="back">Nazad</string>
+    <string name="continue_read">Prodolžiti</string>
+    <string name="copy">Kopijovati</string>
+    <string name="reading_complete">Čitanje dokončeno</string>
+    <string name="reading_progress">Progres čitanja</string>
+    <string name="floader">Papka</string>
+    <string name="last_image_on_level">Poslědnje na uravnju</string>
+    <string name="add_directory">Dobaviti </string>
+    <string name="delete_directory">Izčrknuti directoriju</string>
+
+    <string name="delete_directory_confirm">Napravdu hčeš izčrknuti directoriju "%1$s"?</string>
+    <string name="archives_counting">Kalkulacija arhivov…</string>
+    <string name="deleting_data">Elinovanje danyh…</string>
+    <string name="will_delete_previews">Budut eliminovany podgled i progres čitanja</string>
+    <string name="keep_previews">Podgled i progres čitanja budut shraneny</string>
+    <string name="delete_previews_checkbox">Eliminovati podgled i progres čitanja?</string>
+    <string name="counting_in_progress">Kalkulacija…</string>
+    <string name="deleting_in_progress">Eliminovanje…</string>
+    <string name="delete">Eliminovati</string>
+    <string name="cancel_delete">Anulacija</string>
+    <string name="date_label">Data: %1$s</string>
+    <string name="new_label">NEW</string>
+
+    <!-- DirectoryContentScreen -->
+    <string name="folders">Papky</string>
+    <string name="archives">Arhivy</string>
+
+    <string name="generate_previews">Stvorjenje podgleda</string>
+    <string name="clear_preview">Odčistiti podgled</string>
+    <string name="regenerate_preview">Stvoriti podgled</string>
+    <string name="clear_progress">Odčistiti progres</string>
+
+    <string name="failed_to_load_image">Izobraženje ne dodano</string>
+    <string name="preview_write_error">Grěška zapisanja podgleda</string>
+    <string name="preview_created_success">Podgled stvorjeny</string>
+    <string name="image_copied">Izobraženje kopijovano</string>
+    <string name="copy_error">Grěška kopijovanja: %1$s</string>
+    <string name="preview_creation_error">Grěška stvorjenja podgleda: %1$s</string>
+    <string name="clipboard_image_label">Izobraženje</string>
+    <string name="no_image_data">Nema danyh izobraženja</string>
+
+    <string name="password_dialog_title">trěba parola</string>
+    <string name="password_dialog_message">Arhiv s paroloju. Vpiši parolu dlja prodolženja:</string>
+    <string name="password_label">Parola</string>
+    <string name="password_placeholder">Vpiši parolu</string>
+
+    <string name="sort_by_name">Sortovati imenem</string>
+    <string name="sort_by_date">Sortovati datoku</string>
+    <string name="sort_ascending">Ponad</string>
+    <string name="sort_descending">Niže</string>
+
+    <string name="preview_generation_dialog_title">Stcoriti podgled?</string>
+    <string name="preview_generation_dialog_message">Jesi otvoril novu directoriju. Hčeš stvoriti podgledy dlja vsih arhivov v tutoj papkě?</string>
+    <string name="yes">Da</string>
+    <string name="no">Ne</string>
+
+    <string name="loading">Aplodovanje…</string>
+
+    <string name="enter_password">Vpisati parole</string>
+
+    <string name="sort_menu_label">Sortovanje</string>
+    <string name="sort_by_progress">Progresom</string>
+    <string name="sort_by_last_opened">poslědnjimi odkrytjami</string>
+
+    <string name="previews_deleted">Eliminovano: %1$d</string>
+    <string name="cleanup_error">Grěška čistky: %1$s</string>
+    <string name="cache_cleared">Keš čiščeny</string>
+    <string name="cache_clear_error">Grěška čiščenja keša</string>
+    <string name="unsupported_archive_format">Format achiva ne godit se</string>
+    <string name="no_images_in_archive">V arhive nema izobraženij</string>
+    <string name="invalid_password">Parola godi se</string>
+    <string name="archive_extraction_error">Grěška razpakovanja archiva: %1$s</string>
+    <string name="loading_error">Grěška aplodovanja: %1$s</string>
+
+    <string name="default_folder_name">Papka</string>
+    <string name="no_name">Nema imene</string>
+
+    <string name="extracting_opening_archive">Otvorjenje arhiva…</string>
+    <string name="extracting_finding_first_image">Iskanje prvogo izobraženja…</string>
+    <string name="extracting_extracting_file">Dostanje: %1$s</string>
+    <string name="extracting_no_images_found">Izobraženja ne najdeny</string>
+    <string name="extracting_analyzing_content">Analiza sostava…</string>
+    <string name="extracting_skipping_file">Propust: %1$s</string>
+    <string name="extracting_unpacking_file">Razpakovanje: %1$s</string>
+    <string name="extracting_done">Ukončeno</string>
+
+    <string name="preview_generating">Stvorjenje podgleda…</string>
+    <string name="preview_creating_from_file">Stvorenjenje podgleda iz: %1$s</string>
+    <string name="preview_image_read_failed">Izobraženje ne pročitano</string>
+    <string name="preview_password_protected">Arhive s paroloju</string>
+    <string name="preview_error_with_message">Grěška: %1$s</string>
+
+    <string name="directories_root">Directoriji</string>
+    <string name="read">Pročitano</string>
+
+    <string name="preview_scanning_directory">Skanovanje directoriji…</string>
+    <string name="preview_all_already_generated">Podgledy uže stvorjeny</string>
+    <string name="preview_generation_complete">Skončebi! Obrabotani %1$d archivov</string>
+    <string name="preview_generation_cancelled">Stvorjenje je odrěčeno</string>
+    <string name="preview_generation_error">Grěška pri stvorenjenje podgleda: %1$s</string>
+    <string name="preview_processing_archive">Obrabotanje (%1$d/%2$d): %3$s</string>
+    <string name="preview_processing_with_progress">Obrabotanje (%1$d/%2$d): %3$s</string>
+    <string name="preview_scanning_found_archives">Skanovanje… najdeno %1$d archivov</string>
+
+    <string name="copy_name">Kopijovati ime</string>
+
+    <string name="read_done">Skončena</string>
+
+</resources>

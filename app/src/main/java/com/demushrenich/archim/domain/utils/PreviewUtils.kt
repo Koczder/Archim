@@ -40,7 +40,7 @@ suspend fun generatePreviewForArchive(
     val fileName = try {
         val documentFile = DocumentFile.fromSingleUri(context, archiveUri)
         documentFile?.name ?: archiveUri.lastPathSegment ?: archiveUri.toString().substringAfterLast('/')
-    } catch (e: Exception) {
+    } catch (_: Exception) {
         archiveUri.lastPathSegment ?: archiveUri.toString().substringAfterLast('/')
     }
     val existingPreview = PreviewManager.getPreviewPath(context, fileName, fileSize)
@@ -106,7 +106,7 @@ suspend fun generatePreviewForArchive(
 
         onProgress?.invoke(context.getString(R.string.preview_image_read_failed))
         null
-    } catch (e: PasswordRequiredException) {
+    } catch (_: PasswordRequiredException) {
         onProgress?.invoke(context.getString(R.string.preview_password_protected))
         null
     } catch (e: Exception) {

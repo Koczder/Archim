@@ -8,8 +8,8 @@ import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.Sort
 import androidx.compose.material.icons.filled.Image
-import androidx.compose.material.icons.filled.Sort
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -34,6 +34,8 @@ import com.demushrenich.archim.data.managers.SettingsManager
 import com.demushrenich.archim.domain.PreviewGenerationMode
 import com.demushrenich.archim.domain.CornerStyle
 import com.demushrenich.archim.domain.SortType
+import com.demushrenich.archim.domain.utils.getSavedScroll
+import com.demushrenich.archim.domain.utils.saveScroll
 import com.demushrenich.archim.ui.components.*
 import com.demushrenich.archim.ui.viewmodel.DirectoryContentViewModel
 import kotlinx.coroutines.launch
@@ -72,7 +74,7 @@ fun DirectoryContentScreen(
     var showSortMenu by remember { mutableStateOf(false) }
     val currentSortType by remember { derivedStateOf { viewModel.currentSortType } }
 
-    val saved = viewModel.getSavedScroll(currentDirUri)
+    val saved = getSavedScroll(currentDirUri)
     val listState = remember(currentDirUri) {
         LazyListState(firstVisibleItemIndex = saved.index, firstVisibleItemScrollOffset = saved.offset)
     }
@@ -80,7 +82,7 @@ fun DirectoryContentScreen(
     val clipboardManager = LocalClipboardManager.current
 
     BackHandler {
-        viewModel.saveScroll(currentDirUri, listState.firstVisibleItemIndex, listState.firstVisibleItemScrollOffset)
+        saveScroll(currentDirUri, listState.firstVisibleItemIndex, listState.firstVisibleItemScrollOffset)
         onBack()
     }
 
@@ -225,7 +227,7 @@ fun DirectoryContentScreen(
                     Box {
                         IconButton(onClick = { showSortMenu = true }) {
                             Icon(
-                                Icons.Default.Sort,
+                                Icons.AutoMirrored.Filled.Sort,
                                 contentDescription = stringResource(R.string.sort_menu_label),
                                 tint = MaterialTheme.colorScheme.secondary
                             )
@@ -376,7 +378,7 @@ fun DirectoryContentScreen(
                             FolderItemComponent(
                                 folder = folder,
                                 onOpenFolder = {
-                                    viewModel.saveScroll(currentDirUri, listState.firstVisibleItemIndex, listState.firstVisibleItemScrollOffset)
+                                    saveScroll(currentDirUri, listState.firstVisibleItemIndex, listState.firstVisibleItemScrollOffset)
                                     onOpenFolder(it)
                                 }
                             )
@@ -407,7 +409,7 @@ fun DirectoryContentScreen(
                                     contextMenuState = contextMenuState,
                                     containerCoords = containerCoords,
                                     onTap = {
-                                        viewModel.saveScroll(currentDirUri, listState.firstVisibleItemIndex, listState.firstVisibleItemScrollOffset)
+                                        saveScroll(currentDirUri, listState.firstVisibleItemIndex, listState.firstVisibleItemScrollOffset)
                                         onOpenArchive(archive)
                                     }
                                 )

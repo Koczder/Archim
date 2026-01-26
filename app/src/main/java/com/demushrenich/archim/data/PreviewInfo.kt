@@ -14,7 +14,8 @@ data class ReadingProgress(
 ) {
 
     fun getProgressPercentage(): Float {
-        return if (totalImages > 0) (currentIndex + 1).toFloat() / totalImages.toFloat() else 0f
+        if (totalImages == 0) return 0f
+        return (currentIndex.toFloat() / totalImages.toFloat()).coerceIn(0f, 1f)
     }
 
     fun isCompleted(): Boolean {

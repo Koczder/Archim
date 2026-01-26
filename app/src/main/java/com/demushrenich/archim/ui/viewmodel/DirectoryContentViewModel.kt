@@ -59,17 +59,6 @@ class DirectoryContentViewModel : ViewModel() {
 
     private var currentGenerationJob: Job? = null
 
-    private val scrollPositions = mutableMapOf<String, ScrollPosition>()
-
-    fun saveScroll(key: String, index: Int, offset: Int) {
-        scrollPositions[key] = ScrollPosition(index, offset)
-    }
-
-    fun getSavedScroll(key: String): ScrollPosition {
-        return scrollPositions[key] ?: ScrollPosition(0, 0)
-    }
-
-
     fun checkAndShowPreviewDialog(
         currentDirUri: String,
         isNewDirectory: Boolean,

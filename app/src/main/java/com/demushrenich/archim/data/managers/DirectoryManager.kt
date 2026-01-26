@@ -77,7 +77,7 @@ object DirectoryManager {
             sortTypeName?.let {
                 try {
                     SortType.valueOf(it)
-                } catch (e: IllegalArgumentException) {
+                } catch (_: IllegalArgumentException) {
                     Log.w("DirectoryManager", "Invalid sort type name: $it")
                     null
                 }
@@ -247,7 +247,7 @@ object DirectoryManager {
                 val nameMatch = dir1.name == dir2.name
                 val timeMatch = abs(dir1.lastModified() - dir2.lastModified()) < 1000
                 uriMatch || (nameMatch && timeMatch)
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 false
             }
         }

@@ -38,7 +38,7 @@ import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.res.stringResource
 import com.demushrenich.archim.R
-import com.demushrenich.archim.SortingComponent
+import com.demushrenich.archim.ui.components.SortingComponent
 import com.demushrenich.archim.domain.utils.SortingUtils
 import com.demushrenich.archim.data.AppUiState
 import com.demushrenich.archim.domain.ImageItem
@@ -66,7 +66,7 @@ fun ImageGridScreen(
 ) {
     val context = LocalContext.current
     val levelKey = archiveNavState?.getCurrentLevel()?.path ?: "root"
-    val TAG = "ImageGrid"
+    val tag = "ImageGrid"
     val contextMenuState = rememberContextMenuState()
     var containerCoords by remember { mutableStateOf<LayoutCoordinates?>(null) }
 
@@ -86,7 +86,7 @@ fun ImageGridScreen(
                     )
                 } else null
             } catch (e: Exception) {
-                Log.e(TAG, "Error loading archive structure", e)
+                Log.e(tag, "Error loading archive structure", e)
                 null
             }
         } else null
@@ -178,14 +178,14 @@ fun ImageGridScreen(
                                     it.id == archiveStructure.lastImageId
                                 } ?: -1
 
-                                Log.d(TAG, "Continue clicked, lastImageId=${archiveStructure.lastImageId}, globalIndex=$globalIndex")
-                                Log.d(TAG, "Total images in nav: ${archiveNavState?.allImages?.size}")
+                                Log.d(tag, "Continue clicked, lastImageId=${archiveStructure.lastImageId}, globalIndex=$globalIndex")
+                                Log.d(tag, "Total images in nav: ${archiveNavState?.allImages?.size}")
 
                                 if (globalIndex >= 0) {
-                                    Log.d(TAG, "Invoking continueReading with globalIndex=$globalIndex")
+                                    Log.d(tag, "Invoking continueReading with globalIndex=$globalIndex")
                                     onContinueReadingWithNavigation?.invoke(globalIndex)
                                 } else {
-                                    Log.e(TAG, "Invalid globalIndex: $globalIndex")
+                                    Log.e(tag, "Invalid globalIndex: $globalIndex")
                                 }
                             }
                         ) {

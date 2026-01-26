@@ -11,9 +11,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
+import com.demushrenich.archim.R
 import com.demushrenich.archim.data.ArchiveInfo
 import com.demushrenich.archim.domain.CornerStyle
 import com.demushrenich.archim.domain.utils.archiveFormat
@@ -129,21 +131,31 @@ fun ArchiveItemComponent(
 
             archive.readingProgress?.let { progress ->
                 val percent = progress.getProgressPercentage()
-                LinearProgressIndicator(
-                    progress = { percent },
-                    modifier = Modifier.fillMaxWidth()
-                )
-                Text(
-                    text = "${progress.currentIndex + 0} / ${progress.totalImages}",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+
+                if (percent >= 1f) {
+                    Text(
+                        text = stringResource(R.string.read_done),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                } else {
+                    LinearProgressIndicator(
+                        progress = { percent },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    Text(
+                        text = "${progress.currentIndex} / ${progress.totalImages}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
             } ?: run {
                 LinearProgressIndicator(
                     progress = { 0f },
                     modifier = Modifier.fillMaxWidth()
                 )
             }
+
         }
     }
 }

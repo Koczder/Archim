@@ -87,7 +87,7 @@ class SettingsManager(private val context: Context) {
         Log.d(TAG, "getCurrentBackgroundMode: saved name=$modeName")
         return try {
             BackgroundMode.valueOf(modeName)
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             Log.w(TAG, "Invalid background mode: $modeName, using SYSTEM")
             BackgroundMode.SYSTEM
         }
@@ -168,6 +168,7 @@ class SettingsManager(private val context: Context) {
         val chosenLocale = when (language) {
             Language.ENGLISH -> Locale.forLanguageTag("en")
             Language.RUSSIAN -> Locale.forLanguageTag("ru")
+            Language.INTERSLAVIC -> Locale.forLanguageTag("isv")
             Language.SYSTEM -> {
                 val systemLocale = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
                     Resources.getSystem().configuration.locales.get(0)
@@ -205,7 +206,7 @@ class SettingsManager(private val context: Context) {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
             try {
                 cfg.locales.toLanguageTags()
-            } catch (t: Throwable) {
+            } catch (_: Throwable) {
                 "locales=<error>"
             }
         } else {

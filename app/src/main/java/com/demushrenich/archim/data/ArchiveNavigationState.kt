@@ -11,14 +11,11 @@ data class ArchiveLevel(
     val entries: List<ImageItem>
 )
 
-data class ScrollPosition(val index: Int, val offset: Int)
-
 class ArchiveNavigationState(private val allItems: List<ImageItem>) {
     private val _levels = mutableStateMapOf<Int, ArchiveLevel>()
     private var _currentLevel by mutableIntStateOf(0)
     val allImages: List<ImageItem> = createOrderedImageList(allItems)
 
-    // Построим дерево один раз при инициализации
     private val tree: ArchiveNode = ArchiveTreeBuilder.buildTree(allItems)
 
     fun getCurrentLevel(): ArchiveLevel? = _levels[_currentLevel]
@@ -108,4 +105,9 @@ class ArchiveNavigationState(private val allItems: List<ImageItem>) {
             currentEntries = getCurrentLevel()?.entries ?: return
         }
     }
+
+    fun exportLevels(): Map<Int, ArchiveLevel> {
+        return _levels.toMap()
+    }
+
 }

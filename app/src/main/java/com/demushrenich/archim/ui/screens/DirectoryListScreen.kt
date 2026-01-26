@@ -1,6 +1,5 @@
 package com.demushrenich.archim.ui.screens
 
-import android.util.Log
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -15,21 +14,13 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.text.font.FontWeight
 import com.demushrenich.archim.R
 import com.demushrenich.archim.data.DirectoryItem
-import com.demushrenich.archim.data.managers.DirectoryManager
-import com.demushrenich.archim.data.DirectoryArchivesInfo
+import com.demushrenich.archim.ui.dialogs.DeleteDirectoryDialog
 import java.text.SimpleDateFormat
 import java.util.*
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-
 
 @Composable
 fun DirectoryListScreen(
@@ -39,86 +30,28 @@ fun DirectoryListScreen(
     onOpenDirectory: (DirectoryItem, Boolean) -> Unit,
     onDeleteDirectory: (DirectoryItem) -> Unit
 ) {
-    val context = LocalContext.current
-    val coroutineScope = rememberCoroutineScope()
-
     var showDeleteDialog by remember { mutableStateOf(false) }
     var directoryToDelete by remember { mutableStateOf<DirectoryItem?>(null) }
-    var archivesInfo by remember { mutableStateOf(DirectoryArchivesInfo(0, 0, 0)) }
-    var deletePreviewsAndProgress by remember { mutableStateOf(true) }
-    var isCalculating by remember { mutableStateOf(false) }
-    var isDeleting by remember { mutableStateOf(false) }
 
     val stableDirectories by remember(directories) { derivedStateOf { directories } }
     val stableNewUris by remember(newDirectoryUris) { derivedStateOf { newDirectoryUris } }
 
-    fun calculateArchivesInfo(directory: DirectoryItem) {
-        coroutineScope.launch {
-            delay(300L)
-            isCalculating = true
-            try {
-                val info = withContext(Dispatchers.IO) {
-                    val freshDirectories = DirectoryManager.loadSavedDirectories(context)
-                    DirectoryManager.getArchivesInfoForDirectory(
-                        context = context,
-                        directoryUri = directory.uri,
-                        allDirectories = freshDirectories
-                    )
-                }
-                archivesInfo = info
-            } catch (e: Exception) {
-                archivesInfo = DirectoryArchivesInfo(0, 0, 0)
-                Log.e("DirectoryListScreen", "Error calculating archives info", e)
-            } finally {
-                isCalculating = false
-            }
-        }
+    val dateFormatter = remember {
+        SimpleDateFormat("dd.MM.yyyy HH:mm", Locale.getDefault())
     }
 
     if (showDeleteDialog && directoryToDelete != null) {
         DeleteDirectoryDialog(
             directory = directoryToDelete!!,
-            archivesInfo = archivesInfo,
-            deletePreviewsAndProgress = deletePreviewsAndProgress,
-            isCalculating = isCalculating,
-            isDeleting = isDeleting,
-            onDeletePreviewsCheckedChange = { deletePreviewsAndProgress = it },
             onDismiss = {
-                if (!isDeleting && !isCalculating) {
-                    showDeleteDialog = false
-                    directoryToDelete = null
-                    deletePreviewsAndProgress = true
-                    archivesInfo = DirectoryArchivesInfo(0, 0, 0)
-                }
+                showDeleteDialog = false
+                directoryToDelete = null
             },
             onConfirmDelete = {
                 directoryToDelete?.let { directory ->
-                    coroutineScope.launch {
-                        isDeleting = true
-                        try {
-                            withContext(Dispatchers.IO) {
-                                if (deletePreviewsAndProgress && archivesInfo.archivesToDeleteCount > 0) {
-                                    val freshDirectories = DirectoryManager.loadSavedDirectories(context)
-                                    DirectoryManager.removeAllPreviewsAndProgressForDirectory(
-                                        context = context,
-                                        directoryUri = directory.uri,
-                                        allDirectories = freshDirectories
-                                    )
-                                }
-                            }
-                            withContext(Dispatchers.Main) {
-                                onDeleteDirectory(directory)
-                                showDeleteDialog = false
-                                directoryToDelete = null
-                                deletePreviewsAndProgress = true
-                                isDeleting = false
-                                isCalculating = false
-                            }
-                        } catch (e: Exception) {
-                            Log.e("DirectoryListScreen", "Error deleting directory data", e)
-                            isDeleting = false
-                        }
-                    }
+                    onDeleteDirectory(directory)
+                    showDeleteDialog = false
+                    directoryToDelete = null
                 }
             }
         )
@@ -135,23 +68,22 @@ fun DirectoryListScreen(
         }
 
         LazyColumn(
+            modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(8.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             items(
                 items = stableDirectories,
-                key = { it.uri }
+                key = { it.uri },
+                contentType = { "directory_item" }
             ) { item ->
-                val isNewDirectory by remember(item.uri, stableNewUris) {
-                    derivedStateOf { stableNewUris.contains(item.uri) }
+                val isNewDirectory = remember(item.uri, stableNewUris) {
+                    stableNewUris.contains(item.uri)
                 }
-                val dateText by remember(item.lastModified) {
-                    derivedStateOf {
-                        if (item.lastModified > 0)
-                            SimpleDateFormat("dd.MM.yyyy HH:mm", Locale.getDefault())
-                                .format(Date(item.lastModified))
-                        else "—"
-                    }
+                val dateText = remember(item.lastModified) {
+                    if (item.lastModified > 0)
+                        dateFormatter.format(Date(item.lastModified))
+                    else "—"
                 }
                 DirectoryItemCard(
                     item = item,
@@ -160,145 +92,13 @@ fun DirectoryListScreen(
                     onOpenDirectory = onOpenDirectory,
                     onDeleteClick = {
                         directoryToDelete = item
-                        deletePreviewsAndProgress = true
-                        archivesInfo = DirectoryArchivesInfo(0, 0, 0)
                         showDeleteDialog = true
-                        calculateArchivesInfo(item)
                     }
                 )
             }
         }
     }
 }
-
-@Composable
-fun DeleteDirectoryDialog(
-    directory: DirectoryItem,
-    archivesInfo: DirectoryArchivesInfo,
-    deletePreviewsAndProgress: Boolean,
-    isCalculating: Boolean,
-    isDeleting: Boolean,
-    onDeletePreviewsCheckedChange: (Boolean) -> Unit,
-    onDismiss: () -> Unit,
-    onConfirmDelete: () -> Unit
-) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = {
-            Text(
-                text = stringResource(R.string.delete_directory),
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold
-            )
-        },
-        text = {
-            Column {
-                Text(stringResource(R.string.delete_directory_confirm, directory.displayName))
-
-
-                if (isCalculating) {
-                    Spacer(Modifier.height(16.dp))
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(20.dp),
-                            strokeWidth = 2.dp
-                        )
-                        Spacer(Modifier.width(8.dp))
-                        Text(
-                            stringResource(R.string.archives_counting),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                    }
-                } else if (isDeleting) {
-                    Spacer(Modifier.height(16.dp))
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(20.dp),
-                            strokeWidth = 2.dp
-                        )
-                        Spacer(Modifier.width(8.dp))
-                        Text(
-                            stringResource(R.string.deleting_data),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.error
-                        )
-                    }
-                } else if (archivesInfo.totalArchivesCount > 0) {
-                    Spacer(Modifier.height(12.dp))
-                    Card(
-                        colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.secondaryContainer
-                        )
-                    ) {
-                        Column(Modifier.padding(12.dp)) {
-                            Text(
-                                text = if (deletePreviewsAndProgress)
-                                    stringResource(R.string.will_delete_previews)
-                                else
-                                    stringResource(R.string.keep_previews),
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = if (deletePreviewsAndProgress)
-                                    MaterialTheme.colorScheme.error
-                                else
-                                    MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                    }
-
-                    if (archivesInfo.archivesToDeleteCount > 0) {
-                        Spacer(Modifier.height(12.dp))
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Checkbox(
-                                checked = deletePreviewsAndProgress,
-                                onCheckedChange = onDeletePreviewsCheckedChange,
-                                enabled = true
-                            )
-                            Spacer(Modifier.width(8.dp))
-                            Text(
-                                stringResource(R.string.delete_previews_checkbox),
-                                style = MaterialTheme.typography.bodyMedium
-                            )
-                        }
-                    }
-                }
-            }
-        },
-        confirmButton = {
-            Button(
-                onClick = onConfirmDelete,
-                enabled = !isCalculating && !isDeleting,
-                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
-            ) {
-                if (isCalculating) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(16.dp),
-                        strokeWidth = 2.dp,
-                        color = MaterialTheme.colorScheme.onError
-                    )
-                    Spacer(Modifier.width(8.dp))
-                    Text(stringResource(R.string.counting_in_progress), color = MaterialTheme.colorScheme.onError)
-                } else if (isDeleting) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(16.dp),
-                        strokeWidth = 2.dp,
-                        color = MaterialTheme.colorScheme.onError
-                    )
-                    Spacer(Modifier.width(8.dp))
-                    Text(stringResource(R.string.deleting_in_progress), color = MaterialTheme.colorScheme.onError)
-                } else {
-                    Text(stringResource(R.string.delete), color = MaterialTheme.colorScheme.onError)
-                }
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss, enabled = !isDeleting && !isCalculating) {
-                Text(stringResource(R.string.cancel))
-            }
-        }
-    )
-}
-
 
 @Composable
 private fun DirectoryItemCard(
@@ -370,8 +170,6 @@ private fun DirectoryItemCard(
                     text = stringResource(R.string.date_label, dateText),
                     style = MaterialTheme.typography.labelMedium
                 )
-
-
             }
 
             IconButton(onClick = onDeleteClick) {

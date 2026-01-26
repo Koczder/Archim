@@ -139,7 +139,7 @@ object PreviewManager {
             return try {
                 val parsed = uri.toUri()
                 DocumentsContract.getDocumentId(parsed)
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 uri
             }
         }
@@ -298,52 +298,5 @@ object PreviewManager {
             Log.e(TAG, "cleanupOrphanedPreviews: error", e)
         }
         return deletedCount
-    }
-
-    fun clearAllPreviews(context: Context) {
-        try {
-            val prefs = getPrefs(context)
-            val previewsJson = prefs.getString(PREVIEWS_KEY, "{}")
-
-            try {
-                val type = object : TypeToken<Map<String, PreviewInfo>>() {}.type
-                val previews: Map<String, PreviewInfo> = Gson().fromJson(previewsJson, type) ?: emptyMap()
-                previews.values.forEach { previewInfo ->
-                    if (previewInfo.previewPath.isNotEmpty()) {
-                        try {
-                            val previewFile = File(previewInfo.previewPath)
-                            if (previewFile.exists()) {
-                                previewFile.delete()
-                            }
-                        } catch (e: Exception) {
-                            Log.w(TAG, "clearAllPreviews: couldn't delete file", e)
-                        }
-                    }
-                }
-            } catch (e: Exception) {
-                Log.w(TAG, "clearAllPreviews: error deleting files", e)
-            }
-
-            try {
-                val previewDir = File(context.filesDir, "previews")
-                if (previewDir.exists()) {
-                    previewDir.listFiles()?.forEach { file ->
-                        try {
-                            file.delete()
-                        } catch (e: Exception) {
-                            Log.w(TAG, "clearAllPreviews: couldn't delete cache file", e)
-                        }
-                    }
-                }
-            } catch (e: Exception) {
-                Log.w(TAG, "clearAllPreviews: error clearing cache", e)
-            }
-
-            prefs.edit { clear() }
-            Log.d(TAG, "clearAllPreviews: cleared all previews")
-        } catch (e: Exception) {
-            Log.e(TAG, "clearAllPreviews: error", e)
-            getPrefs(context).edit { clear() }
-        }
     }
 }

@@ -6,6 +6,7 @@
     <string name="language_system">System Default</string>
     <string name="language_english">English</string>
     <string name="language_russian">Русский</string>
+    <string name="language_interslavic">Medžuslovjansky</string>
 
     <!-- Common -->
     <string name="cancel">Cancel</string>
@@ -162,5 +163,7 @@
     <string name="preview_scanning_found_archives">Scanning… archives found: %1$d</string>
 
     <string name="copy_name">Copy Name</string>
+
+    <string name="read_done">Done</string>
 
 </resources>

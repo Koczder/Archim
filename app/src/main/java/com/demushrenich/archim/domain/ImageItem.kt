@@ -1,7 +1,5 @@
 package com.demushrenich.archim.domain
 
-import java.util.UUID
-
 data class ImageItem(
     val filePath: String? = null,
     val data: ByteArray? = null,

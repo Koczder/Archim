@@ -1,4 +1,4 @@
-package com.demushrenich.archim
+package com.demushrenich.archim.ui.components
 
 import androidx.compose.foundation.layout.Row
 import androidx.compose.material.icons.Icons
@@ -10,6 +10,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
+import com.demushrenich.archim.R
 import com.demushrenich.archim.domain.SortCategory
 import com.demushrenich.archim.domain.SortType
 

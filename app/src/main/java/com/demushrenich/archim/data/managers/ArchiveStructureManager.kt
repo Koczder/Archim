@@ -2,7 +2,6 @@ package com.demushrenich.archim.data.managers
 
 import android.content.Context
 import android.util.Log
-import com.demushrenich.archim.data.ArchiveLevel
 import com.demushrenich.archim.data.ArchiveLevelData
 import com.demushrenich.archim.data.ArchiveNavigationState
 import com.demushrenich.archim.data.ArchiveStructure
@@ -55,7 +54,7 @@ object ArchiveStructureManager {
             val existingStructure = loadArchiveStructure(context, fileName, fileSize)
             val existingLevels = existingStructure?.levels?.associateBy { it.path }?.toMutableMap() ?: mutableMapOf()
 
-            val allLevels = getAllLevels(archiveNavState)
+            val allLevels = archiveNavState.exportLevels()
 
             allLevels.forEach { (_, archiveLevel) ->
                 val imagesOnLevel = archiveLevel.entries.filter { !it.isFolder }
@@ -269,18 +268,17 @@ object ArchiveStructureManager {
             val structure = loadArchiveStructure(context, fileName, fileSize) ?: return
 
             val totalReadCount = structure.getTotalReadCount()
-            val adjustedIndex = if (totalReadCount > 0) totalReadCount - 1 else 0
 
             PreviewManager.saveReadingProgressForPreview(
                 context = context,
                 archiveUri = structure.archiveUri,
                 fileName = fileName,
                 fileSize = fileSize,
-                currentIndex = adjustedIndex,
+                currentIndex = totalReadCount,
                 totalImages = structure.totalImages
             )
 
-            Log.d(TAG, "syncProgressToPreview: synced progress $adjustedIndex/${structure.totalImages}")
+            Log.d(TAG, "syncProgressToPreview: synced progress $totalReadCount/${structure.totalImages}")
         } catch (e: Exception) {
             Log.e(TAG, "syncProgressToPreview: error", e)
         }
@@ -302,27 +300,6 @@ object ArchiveStructureManager {
         } catch (e: Exception) {
             Log.e(TAG, "deleteArchiveStructure: error", e)
         }
-    }
-
-    private fun getAllLevels(archiveNavState: ArchiveNavigationState): Map<Int, ArchiveLevel> {
-        val levels = mutableMapOf<Int, ArchiveLevel>()
-
-        try {
-            val field = archiveNavState.javaClass.getDeclaredField("_levels")
-            field.isAccessible = true
-            @Suppress("UNCHECKED_CAST")
-            val levelsMap = field.get(archiveNavState) as? Map<Int, ArchiveLevel>
-            if (levelsMap != null) {
-                levels.putAll(levelsMap)
-            }
-        } catch (e: Exception) {
-            Log.e(TAG, "getAllLevels: error accessing _levels field", e)
-            archiveNavState.getCurrentLevel()?.let { currentLevel ->
-                levels[0] = currentLevel
-            }
-        }
-
-        return levels
     }
 
 }

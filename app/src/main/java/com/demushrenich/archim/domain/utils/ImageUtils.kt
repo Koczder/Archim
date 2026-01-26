@@ -1,4 +1,4 @@
-package com.demushrenich.archim.utils
+package com.demushrenich.archim.domain.utils
 
 import android.content.Context
 import coil.ImageLoader

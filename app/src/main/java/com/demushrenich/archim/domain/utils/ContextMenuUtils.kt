@@ -141,6 +141,6 @@ private fun cleanOldClipboardFiles(cacheDir: File) {
                 file.delete()
             }
         }
-    } catch (e: Exception) {
+    } catch (_: Exception) {
     }
 }

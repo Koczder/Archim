@@ -31,8 +31,8 @@ import com.demushrenich.archim.domain.utils.extractImagesFromArchive
 import com.demushrenich.archim.domain.utils.generatePreviewFromImage
 import com.demushrenich.archim.domain.utils.getFileExtension
 import com.demushrenich.archim.domain.utils.isSupportedArchive
-import com.demushrenich.archim.utils.clearArchiveImagesFromCache
-
+import com.demushrenich.archim.domain.utils.clearArchiveImagesFromCache
+import kotlinx.coroutines.flow.Flow
 
 class MainViewModel : ViewModel() {
 
@@ -55,53 +55,46 @@ class MainViewModel : ViewModel() {
 
     private var currentArchiveFile: DocumentFile? = null
 
-
     private var currentArchiveStructure: ArchiveStructure? = null
 
+    private var directoriesLoaded = false
+
     fun initializeSettings(context: Context) {
-        if (settingsManager == null) {
-            settingsManager = SettingsManager(context)
-            settingsManager?.initializeLanguage()
+        if (settingsManager != null) return
 
-            viewModelScope.launch {
-                settingsManager?.currentLanguage?.collect { language ->
-                    _uiState.value = _uiState.value.updateSettings { copy(currentLanguage = language) }
-                }
-            }
+        settingsManager = SettingsManager(context).apply { initializeLanguage() }
 
-            viewModelScope.launch {
-                settingsManager?.readingDirection?.collect { direction ->
-                    _uiState.value = _uiState.value.updateSettings { copy(readingDirection = direction) }
-                }
-            }
+        collectSetting(settingsManager!!.currentLanguage) {
+            copy(currentLanguage = it)
+        }
+        collectSetting(settingsManager!!.readingDirection) {
+            copy(readingDirection = it)
+        }
+        collectSetting(settingsManager!!.previewGenerationMode) {
+            copy(previewGenerationMode = it)
+        }
+        collectSetting(settingsManager!!.backgroundMode) {
+            copy(backgroundMode = it)
+        }
+        collectSetting(settingsManager!!.archiveCornerStyle) {
+            copy(archiveCornerStyle = it)
+        }
+        collectSetting(settingsManager!!.imageCornerStyle) {
+            copy(imageCornerStyle = it)
+        }
+        collectSetting(settingsManager!!.archiveOpenMode) {
+            copy(archiveOpenMode = it)
+        }
+    }
 
-            viewModelScope.launch {
-                settingsManager?.previewGenerationMode?.collect { mode ->
-                    _uiState.value = _uiState.value.updateSettings { copy(previewGenerationMode = mode) }
-                }
-            }
-
-            viewModelScope.launch {
-                settingsManager?.backgroundMode?.collect { mode ->
-                    _uiState.value = _uiState.value.updateSettings { copy(backgroundMode = mode) }
-                }
-            }
-
-            viewModelScope.launch {
-                settingsManager?.archiveCornerStyle?.collect { style ->
-                    _uiState.value = _uiState.value.updateSettings { copy(archiveCornerStyle = style) }
-                }
-            }
-
-            viewModelScope.launch {
-                settingsManager?.imageCornerStyle?.collect { style ->
-                    _uiState.value = _uiState.value.updateSettings { copy(imageCornerStyle = style) }
-                }
-            }
-
-            viewModelScope.launch {
-                settingsManager?.archiveOpenMode?.collect { mode ->
-                    _uiState.value = _uiState.value.updateSettings { copy(archiveOpenMode = mode) }
+    private fun <T> collectSetting(
+        flow: Flow<T>,
+        update: AppSettings.(T) -> AppSettings
+    ) {
+        viewModelScope.launch {
+            flow.collect { value ->
+                _uiState.value = _uiState.value.updateSettings {
+                    update(value)
                 }
             }
         }
@@ -129,17 +122,6 @@ class MainViewModel : ViewModel() {
 
     fun changeReadingDirection(direction: ReadingDirection) {
         settingsManager?.setReadingDirection(direction)
-    }
-
-    fun loadSavedDirectories(context: Context) {
-        viewModelScope.launch(Dispatchers.IO) {
-            val savedDirectories = DirectoryManager.loadSavedDirectories(context)
-            withContext(Dispatchers.Main) {
-                _directories.clear()
-                _directories.addAll(savedDirectories)
-                _navigationState.setRootLevel(savedDirectories)
-            }
-        }
     }
 
     fun changeArchiveCornerStyle(style: CornerStyle) {
@@ -373,14 +355,20 @@ class MainViewModel : ViewModel() {
 
             if (fileSize > 0) {
                 val totalImages = archiveNavState.allImages.size
-                PreviewManager.saveReadingProgressForPreview(
-                    context = context,
-                    archiveUri = uri.toString(),
-                    fileName = fileName,
-                    fileSize = fileSize,
-                    currentIndex = 0,
-                    totalImages = totalImages
-                )
+                val existingProgress =
+                    PreviewManager.getReadingProgressForPreview(context, fileName, fileSize)
+
+                if (existingProgress == null) {
+                    PreviewManager.saveReadingProgressForPreview(
+                        context = context,
+                        archiveUri = uri.toString(),
+                        fileName = fileName,
+                        fileSize = fileSize,
+                        currentIndex = 0,
+                        totalImages = totalImages
+                    )
+                }
+
 
                 val structure = ArchiveStructureManager.loadArchiveStructure(context, fileName, fileSize)
 
@@ -585,7 +573,7 @@ class MainViewModel : ViewModel() {
     fun canNavigateBackInArchive(): Boolean = archiveNavState?.canNavigateBack() == true
 
     private fun loadArchive(context: Context, uri: Uri, password: String?) {
-        Log.d("ArchiveDebug", "loadArchive: setting currentArchiveFile to ${uri}")
+        Log.d("ArchiveDebug", "loadArchive: setting currentArchiveFile to $uri")
         archiveStructureSaved = false
         currentArchiveStructure = null
         currentArchiveFile = DocumentFile.fromSingleUri(context, uri)
@@ -644,12 +632,12 @@ class MainViewModel : ViewModel() {
                     }
                 }
 
-            } catch (e: PasswordRequiredException) {
+            } catch (_: PasswordRequiredException) {
                 withContext(Dispatchers.Main) {
                     _uiState.value = _uiState.value.updateArchive { copy(showPasswordDialog = true) }
                         .updateLoading { copy(isLoading = false, errorMessage = null) }
                 }
-            } catch (e: WrongPasswordException) {
+            } catch (_: WrongPasswordException) {
                 withContext(Dispatchers.Main) {
                     _uiState.value = _uiState.value.updateArchive {
                         copy(showPasswordDialog = true, passwordError = true, passwordErrorMessage = context.getString(R.string.invalid_password))
@@ -950,6 +938,32 @@ class MainViewModel : ViewModel() {
                         copy(images = sortedImages, sortType = sortType)
                     }
                 }
+            }
+        }
+    }
+
+    fun loadSavedDirectoriesIfNeeded(context: Context) {
+        if (directoriesLoaded) return
+
+        viewModelScope.launch(Dispatchers.IO) {
+            val savedDirectories = DirectoryManager.loadSavedDirectories(context)
+            withContext(Dispatchers.Main) {
+                _directories.clear()
+                _directories.addAll(savedDirectories)
+                _navigationState.setRootLevel(savedDirectories)
+                directoriesLoaded = true
+            }
+        }
+    }
+
+    fun loadSavedDirectories(context: Context) {
+        viewModelScope.launch(Dispatchers.IO) {
+            val savedDirectories = DirectoryManager.loadSavedDirectories(context)
+            withContext(Dispatchers.Main) {
+                _directories.clear()
+                _directories.addAll(savedDirectories)
+                _navigationState.setRootLevel(savedDirectories)
+                directoriesLoaded = true
             }
         }
     }

@@ -3,7 +3,9 @@ package com.demushrenich.archim.domain
 enum class Language(val code: String, val displayName: String) {
     SYSTEM("system", "System Default"),
     ENGLISH("en", "English"),
-    RUSSIAN("ru", "Русский");
+    RUSSIAN("ru", "Русский"),
+
+    INTERSLAVIC("isv", "Medžuslovjansky");
 
     companion object {
         fun fromCode(code: String): Language {
