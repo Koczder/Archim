@@ -33,12 +33,13 @@ Archim is a lightweight Android application designed for seamless viewing of ima
 ### 📦 Archive Navigation
 - Navigate **nested folders** inside archives
 - **Sorting preferences preserved** in every subfolder — exactly as you set them
+
 ### 🔒 Archive Security
 - Open password-protected archives
 - Passwords are **never stored** — entered only when needed
 
 ### 🌍 Localization
-- **English** & **Русский**
+- **English**, **Русский** & **Medžuslovjansky**
 
 > Supported image formats: JPG, PNG, WEBP, GIF (animated), BMP
 
