@@ -45,6 +45,7 @@ import com.demushrenich.archim.data.ArchiveNavigationState
 import com.demushrenich.archim.domain.BackgroundMode
 import com.demushrenich.archim.data.AppUiState
 import com.demushrenich.archim.domain.ImageItem
+import com.demushrenich.archim.domain.MediaType
 import com.demushrenich.archim.domain.ReadingDirection
 import kotlinx.coroutines.launch
 import androidx.compose.foundation.layout.WindowInsets
@@ -54,6 +55,24 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.ui.res.stringResource
 import com.demushrenich.archim.R
 import com.demushrenich.archim.domain.utils.ImageViewerUtils
+import androidx.compose.ui.viewinterop.AndroidView
+import androidx.media3.common.MediaItem as Media3Item
+import androidx.media3.common.Player
+import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.ui.PlayerView
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.material.icons.filled.Pause
+import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.automirrored.filled.VolumeUp
+import androidx.compose.material.icons.automirrored.filled.VolumeOff
+import androidx.compose.material3.Slider
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Arrangement
+import kotlinx.coroutines.delay
 
 @Composable
 fun SetStatusBarVisible(visible: Boolean) {
@@ -78,6 +97,7 @@ fun PreloadAdjacentImages(imagesList: List<ImageItem>, selectedImageIndex: Int) 
             .filter { it in imagesList.indices }
             .forEach { index ->
                 val item = imagesList[index]
+                if (item.mediaType != MediaType.IMAGE) return@forEach
                 val request = ImageRequest.Builder(context)
                     .data(item.data ?: item.filePath)
                     .memoryCacheKey(item.id)
@@ -85,6 +105,138 @@ fun PreloadAdjacentImages(imagesList: List<ImageItem>, selectedImageIndex: Int) 
                     .build()
                 imageLoader.enqueue(request)
             }
+    }
+}
+
+private val VIDEO_SPEED_OPTIONS = listOf(0.5f, 0.75f, 1f, 1.25f, 1.5f, 2f)
+
+@Composable
+fun EmbeddedVideoPlayer(
+    item: ImageItem,
+    uiVisible: Boolean,
+    onToggleUi: () -> Unit
+) {
+    val context = LocalContext.current
+
+    val exoPlayer = remember(item.id) {
+        ExoPlayer.Builder(context).build().apply {
+            val path = item.filePath
+            if (path != null) {
+                setMediaItem(Media3Item.fromUri(path))
+                prepare()
+                playWhenReady = true
+            }
+        }
+    }
+
+    var isPlaying by remember(item.id) { mutableStateOf(true) }
+    var isMuted by remember(item.id) { mutableStateOf(false) }
+    var lastVolume by remember(item.id) { mutableFloatStateOf(1f) }
+    var speed by remember(item.id) { mutableFloatStateOf(1f) }
+    var showSpeedMenu by remember(item.id) { mutableStateOf(false) }
+    var position by remember(item.id) { mutableLongStateOf(0L) }
+    var duration by remember(item.id) { mutableLongStateOf(0L) }
+
+    DisposableEffect(item.id) {
+        val listener = object : Player.Listener {
+            override fun onIsPlayingChanged(playing: Boolean) { isPlaying = playing }
+        }
+        exoPlayer.addListener(listener)
+        onDispose {
+            exoPlayer.removeListener(listener)
+            exoPlayer.release()
+        }
+    }
+
+    LaunchedEffect(item.id) {
+        while (true) {
+            position = exoPlayer.currentPosition.coerceAtLeast(0)
+            duration = exoPlayer.duration.coerceAtLeast(0)
+            delay(500)
+        }
+    }
+
+    Box(Modifier.fillMaxSize()) {
+        AndroidView(
+            factory = { ctx ->
+                PlayerView(ctx).apply {
+                    player = exoPlayer
+                    useController = false
+                }
+            },
+            modifier = Modifier.fillMaxSize()
+        )
+
+        Box(
+            Modifier
+                .fillMaxSize()
+                .pointerInput(item.id) {
+                    detectTapGestures(onTap = { onToggleUi() })
+                }
+        )
+
+        if (uiVisible) {
+            Column(
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .background(Color.Black.copy(alpha = 0.5f))
+                    .padding(horizontal = 12.dp, vertical = 8.dp)
+            ) {
+                Slider(
+                    value = position.toFloat(),
+                    valueRange = 0f..duration.toFloat().coerceAtLeast(1f),
+                    onValueChange = { exoPlayer.seekTo(it.toLong()) }
+                )
+                Row(
+                    Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Row {
+                        IconButton(onClick = {
+                            if (isPlaying) exoPlayer.pause() else exoPlayer.play()
+                        }) {
+                            Icon(
+                                imageVector = if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
+                                contentDescription = null,
+                                tint = Color.White
+                            )
+                        }
+                        IconButton(onClick = {
+                            isMuted = !isMuted
+                            if (isMuted) {
+                                lastVolume = exoPlayer.volume
+                                exoPlayer.volume = 0f
+                            } else {
+                                exoPlayer.volume = lastVolume
+                            }
+                        }) {
+                            Icon(
+                                imageVector = if (isMuted) Icons.AutoMirrored.Filled.VolumeOff else Icons.AutoMirrored.Filled.VolumeUp,
+                                contentDescription = null,
+                                tint = Color.White
+                            )
+                        }
+                    }
+                    Box {
+                        TextButton(onClick = { showSpeedMenu = true }) {
+                            Text("${speed}x", color = Color.White)
+                        }
+                        DropdownMenu(expanded = showSpeedMenu, onDismissRequest = { showSpeedMenu = false }) {
+                            VIDEO_SPEED_OPTIONS.forEach { option ->
+                                DropdownMenuItem(
+                                    text = { Text("${option}x") },
+                                    onClick = {
+                                        speed = option
+                                        exoPlayer.setPlaybackSpeed(option)
+                                        showSpeedMenu = false
+                                    }
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -173,9 +325,7 @@ fun ImageViewerScreen(
 
     PreloadAdjacentImages(imagesList, filteredSelectedImageIndex ?: 0)
 
-    BackHandler(enabled = true) {
-        onBack()
-    }
+
 
     Box(
         Modifier
@@ -196,139 +346,147 @@ fun ImageViewerScreen(
 
         SetStatusBarVisible(showUI)
 
-        Image(
-            painter = rememberAsyncImagePainter(
-                model = ImageRequest.Builder(context)
-                    .data(currentImage.data ?: currentImage.filePath)
-                    .memoryCacheKey(currentImage.id)
-                    .build()
-            ),
-            contentDescription = currentImage.fileName,
-            contentScale = ContentScale.Fit,
-            modifier = Modifier
-                .fillMaxSize()
-                .pointerInput(selectedIndex) {
-                    awaitPointerEventScope {
-                        var totalDragX = 0f
-                        var isSwiping = false
-                        var tapStartTime = 0L
-                        var tapDetected = false
-                        var lastTapTime = 0L
-                        val doubleTapTimeout = 250L
+        if (currentImage.mediaType == MediaType.VIDEO) {
+            EmbeddedVideoPlayer(
+                item = currentImage,
+                uiVisible = uiVisible,
+                onToggleUi = { uiVisible = !uiVisible }
+            )
+        } else {
+            Image(
+                painter = rememberAsyncImagePainter(
+                    model = ImageRequest.Builder(context)
+                        .data(currentImage.data ?: currentImage.filePath)
+                        .memoryCacheKey(currentImage.id)
+                        .build()
+                ),
+                contentDescription = currentImage.fileName,
+                contentScale = ContentScale.Fit,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .pointerInput(selectedIndex) {
+                        awaitPointerEventScope {
+                            var totalDragX = 0f
+                            var isSwiping = false
+                            var tapStartTime = 0L
+                            var tapDetected = false
+                            var lastTapTime = 0L
+                            val doubleTapTimeout = 250L
 
-                        while (true) {
-                            val event = awaitPointerEvent()
-                            val pointers = event.changes.size
+                            while (true) {
+                                val event = awaitPointerEvent()
+                                val pointers = event.changes.size
 
-                            if (pointers == 2) {
-                                val zoomChange = event.calculateZoom()
-                                val panChange = event.calculatePan()
+                                if (pointers == 2) {
+                                    val zoomChange = event.calculateZoom()
+                                    val panChange = event.calculatePan()
 
-                                if (zoomChange != 1f) {
-                                    scale = (scale * zoomChange).coerceIn(1f, 5f)
-                                }
-
-                                if (scale > 1f) {
-                                    offsetX += panChange.x * 0.3f
-                                    offsetY += panChange.y * 0.3f
-                                    val maxOffsetX = size.width * (scale - 1) / 2
-                                    val maxOffsetY = size.height * (scale - 1) / 2
-                                    offsetX = offsetX.coerceIn(-maxOffsetX, maxOffsetX)
-                                    offsetY = offsetY.coerceIn(-maxOffsetY, maxOffsetY)
-                                }
-                            } else if (pointers == 1) {
-                                val change = event.changes.first()
-
-                                if (change.pressed && tapStartTime == 0L) {
-                                    tapStartTime = System.currentTimeMillis()
-                                    tapDetected = true
-                                }
-
-                                if (scale > 1.2f) {
-                                    val dragChangeX = change.positionChange().x
-                                    val dragChangeY = change.positionChange().y
-
-                                    offsetX += dragChangeX * 0.3f
-                                    offsetY += dragChangeY * 0.3f
-                                    val maxOffsetX = size.width * (scale - 1) / 2
-                                    val maxOffsetY = size.height * (scale - 1) / 2
-                                    offsetX = offsetX.coerceIn(-maxOffsetX, maxOffsetX)
-                                    offsetY = offsetY.coerceIn(-maxOffsetY, maxOffsetY)
-
-                                    if (abs(dragChangeX) > 2f || abs(dragChangeY) > 2f) {
-                                        tapDetected = false
+                                    if (zoomChange != 1f) {
+                                        scale = (scale * zoomChange).coerceIn(1f, 5f)
                                     }
-                                } else {
-                                    val dragChangeX = change.positionChange().x
 
-                                    if (abs(dragChangeX) > 2f) {
-                                        tapDetected = false
-                                        totalDragX += dragChangeX
+                                    if (scale > 1f) {
+                                        offsetX += panChange.x * 0.3f
+                                        offsetY += panChange.y * 0.3f
+                                        val maxOffsetX = size.width * (scale - 1) / 2
+                                        val maxOffsetY = size.height * (scale - 1) / 2
+                                        offsetX = offsetX.coerceIn(-maxOffsetX, maxOffsetX)
+                                        offsetY = offsetY.coerceIn(-maxOffsetY, maxOffsetY)
+                                    }
+                                } else if (pointers == 1) {
+                                    val change = event.changes.first()
 
-                                        if (abs(totalDragX) > 20f) {
-                                            isSwiping = true
-                                            dragOffsetX = (totalDragX * 0.22f).coerceIn(
-                                                -size.width * 0.08f,
-                                                size.width * 0.08f
-                                            )
+                                    if (change.pressed && tapStartTime == 0L) {
+                                        tapStartTime = System.currentTimeMillis()
+                                        tapDetected = true
+                                    }
+
+                                    if (scale > 1.2f) {
+                                        val dragChangeX = change.positionChange().x
+                                        val dragChangeY = change.positionChange().y
+
+                                        offsetX += dragChangeX * 0.3f
+                                        offsetY += dragChangeY * 0.3f
+                                        val maxOffsetX = size.width * (scale - 1) / 2
+                                        val maxOffsetY = size.height * (scale - 1) / 2
+                                        offsetX = offsetX.coerceIn(-maxOffsetX, maxOffsetX)
+                                        offsetY = offsetY.coerceIn(-maxOffsetY, maxOffsetY)
+
+                                        if (abs(dragChangeX) > 2f || abs(dragChangeY) > 2f) {
+                                            tapDetected = false
+                                        }
+                                    } else {
+                                        val dragChangeX = change.positionChange().x
+
+                                        if (abs(dragChangeX) > 2f) {
+                                            tapDetected = false
+                                            totalDragX += dragChangeX
+
+                                            if (abs(totalDragX) > 20f) {
+                                                isSwiping = true
+                                                dragOffsetX = (totalDragX * 0.22f).coerceIn(
+                                                    -size.width * 0.08f,
+                                                    size.width * 0.08f
+                                                )
+                                            }
                                         }
                                     }
-                                }
 
-                                if (!change.pressed) {
-                                    val tapDuration = System.currentTimeMillis() - tapStartTime
+                                    if (!change.pressed) {
+                                        val tapDuration = System.currentTimeMillis() - tapStartTime
 
-                                    if (tapDetected && tapDuration < 200 && !isSwiping) {
-                                        val now = System.currentTimeMillis()
-                                        if (now - lastTapTime < doubleTapTimeout) {
-                                            if (scale > 1f) {
-                                                scale = 1f
-                                                offsetX = 0f
-                                                offsetY = 0f
-                                                dragOffsetX = 0f
-                                                uiVisible = true
+                                        if (tapDetected && tapDuration < 200 && !isSwiping) {
+                                            val now = System.currentTimeMillis()
+                                            if (now - lastTapTime < doubleTapTimeout) {
+                                                if (scale > 1f) {
+                                                    scale = 1f
+                                                    offsetX = 0f
+                                                    offsetY = 0f
+                                                    dragOffsetX = 0f
+                                                    uiVisible = true
+                                                } else {
+                                                    scale = 2f
+                                                }
+                                            }
+                                            if (scale <= 1f) {
+                                                uiVisible = !uiVisible
+                                            }
+                                            lastTapTime = now
+                                        } else if (isSwiping && scale <= 1.2f) {
+                                            val threshold = 200f
+                                            if (readingDirection == ReadingDirection.LEFT_TO_RIGHT) {
+                                                if (totalDragX > threshold && selectedIndex > 0) {
+                                                    onIndexChange(selectedIndex - 1)
+                                                }
+                                                if (totalDragX < -threshold && selectedIndex < imagesList.size - 1) {
+                                                    onIndexChange(selectedIndex + 1)
+                                                }
                                             } else {
-                                                scale = 2f
+                                                if (totalDragX > threshold && selectedIndex < imagesList.size - 1) {
+                                                    onIndexChange(selectedIndex + 1)
+                                                }
+                                                if (totalDragX < -threshold && selectedIndex > 0) {
+                                                    onIndexChange(selectedIndex - 1)
+                                                }
                                             }
                                         }
-                                        if (scale <= 1f) {
-                                            uiVisible = !uiVisible
-                                        }
-                                        lastTapTime = now
-                                    } else if (isSwiping && scale <= 1.2f) {
-                                        val threshold = 200f
-                                        if (readingDirection == ReadingDirection.LEFT_TO_RIGHT) {
-                                            if (totalDragX > threshold && selectedIndex > 0) {
-                                                onIndexChange(selectedIndex - 1)
-                                            }
-                                            if (totalDragX < -threshold && selectedIndex < imagesList.size - 1) {
-                                                onIndexChange(selectedIndex + 1)
-                                            }
-                                        } else {
-                                            if (totalDragX > threshold && selectedIndex < imagesList.size - 1) {
-                                                onIndexChange(selectedIndex + 1)
-                                            }
-                                            if (totalDragX < -threshold && selectedIndex > 0) {
-                                                onIndexChange(selectedIndex - 1)
-                                            }
-                                        }
+
+                                        totalDragX = 0f
+                                        dragOffsetX = 0f
+                                        isSwiping = false
+                                        tapStartTime = 0L
+                                        tapDetected = false
                                     }
-
-                                    totalDragX = 0f
-                                    dragOffsetX = 0f
-                                    isSwiping = false
-                                    tapStartTime = 0L
-                                    tapDetected = false
                                 }
-                            }
 
-                            event.changes.forEach { it.consume() }
+                                event.changes.forEach { it.consume() }
+                            }
                         }
                     }
-                }
-                .scale(scale)
-                .offset(x = (offsetX + animatedOffsetX).dp, y = offsetY.dp)
-        )
+                    .scale(scale)
+                    .offset(x = (offsetX + animatedOffsetX).dp, y = offsetY.dp)
+            )
+        }
 
         if (showUI) {
             TopAppBar(

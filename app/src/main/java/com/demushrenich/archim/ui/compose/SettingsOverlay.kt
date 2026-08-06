@@ -20,13 +20,17 @@ fun SettingsOverlay(
         onDirectionChange = { viewModel.changeReadingDirection(it) },
         currentPreviewMode = uiState.settings.previewGenerationMode,
         onPreviewModeChange = { viewModel.changePreviewGenerationMode(it) },
+        currentLoadingMode = uiState.settings.previewLoadingMode,
+        onLoadingModeChange = { viewModel.changePreviewLoadingMode(it) },
         currentArchiveCornerStyle = uiState.settings.archiveCornerStyle,
         onArchiveCornerStyleChange = { viewModel.changeArchiveCornerStyle(it) },
         currentImageCornerStyle = uiState.settings.imageCornerStyle,
         onImageCornerStyleChange = { viewModel.changeImageCornerStyle(it) },
         currentArchiveOpenMode = uiState.settings.archiveOpenMode,
         onArchiveOpenModeChange = { viewModel.changeArchiveOpenMode(it) },
-        onCleanupOrphanedPreviews = { viewModel.cleanupOrphanedPreviews(context) },
+        currentAddDirectoryButtonPosition = uiState.settings.addDirectoryButtonPosition,
+        onAddDirectoryButtonPositionChange = { viewModel.changeAddDirectoryButtonPosition(it) },
+        onCleanupOrphanedPreviews = { viewModel.cleanupOrphanedPreviews() },
         onBackClick = { viewModel.hideSettings() }
     )
 }

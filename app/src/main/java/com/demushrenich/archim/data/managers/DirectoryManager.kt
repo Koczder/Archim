@@ -22,11 +22,15 @@ import kotlin.collections.plusAssign
 import kotlin.math.abs
 import androidx.core.content.edit
 import com.demushrenich.archim.R
+import kotlinx.coroutines.joinAll
+import kotlinx.coroutines.launch
 
 object DirectoryManager {
 
     private const val SORT_PREFERENCES_NAME = "directory_sort_preferences"
     private const val SORT_KEY_PREFIX = "sort_"
+
+    private val gson = Gson()
 
     private fun getAddedDirCacheDir(context: Context): File {
         val addedDirDir = File(context.filesDir, "addedDir")
@@ -42,9 +46,13 @@ object DirectoryManager {
 
     private fun saveDirectoriesList(context: Context, directories: List<DirectoryItem>) {
         try {
-            val json = Gson().toJson(directories)
+            val json = gson.toJson(directories)
             getDirectoriesListFile(context).writeText(json)
         } catch (_: Exception) {}
+    }
+
+    fun saveDirectoriesOrder(context: Context, directories: List<DirectoryItem>) {
+        saveDirectoriesList(context, directories)
     }
 
     fun loadSavedDirectories(context: Context): List<DirectoryItem> {
@@ -54,7 +62,7 @@ object DirectoryManager {
 
             val json = file.readText()
             val type = object : TypeToken<List<DirectoryItem>>() {}.type
-            Gson().fromJson(json, type) ?: emptyList()
+            gson.fromJson(json, type) ?: emptyList()
         } catch (_: Exception) {
             emptyList()
         }
@@ -157,20 +165,32 @@ object DirectoryManager {
             val archives = getAllArchivesFromDirectoryExcludingSubDirectories(
                 context, directoryUri.toUri(), allDirectories
             )
-            archives.forEach { archive ->
-                PreviewManager.removePreviewAndProgressByUri(
-                    context = context,
-                    archiveUri = archive.filePath,
-                )
-                ArchiveStructureManager.deleteArchiveStructure(
-                    context = context,
-                    fileName = archive.originalName,
-                    fileSize = archive.fileSize
-                )
+            PreviewManager.clearMetadataForDirectory(context, directoryUri)
+            val previewsSnapshot = PreviewManager.getPreviewsSnapshot(context)
 
-                yield()
-            }
-        } catch (_: Exception) {
+            archives.map { archive ->
+                launch {
+                    val hasCopies = PreviewManager.hasArchiveEntriesFromSnapshot(
+                        previewsSnapshot,
+                        archive.originalName,
+                        archive.fileSize
+                    )
+
+                    if (!hasCopies) {
+                        ArchiveStructureManager.deleteArchiveStructure(
+                            context = context,
+                            fileName = archive.originalName,
+                            fileSize = archive.fileSize
+                        )
+                        Log.d("DirectoryManager", "Structure was deleted")
+                    } else {
+                        Log.d("DirectoryManager", "Structure was saved")
+                    }
+                }
+            }.joinAll()
+
+        } catch (e: Exception) {
+            Log.e("DirectoryManager", "Error of deleting", e)
         }
     }
 
@@ -229,6 +249,7 @@ object DirectoryManager {
     ): List<ArchiveInfo> = withContext(Dispatchers.IO) {
         val result = mutableListOf<ArchiveInfo>()
         val dir = DocumentFile.fromTreeUri(context, dirUri) ?: return@withContext emptyList()
+        val previewsSnapshot = PreviewManager.getPreviewsSnapshot(context)
 
         Log.d("DirectoryManager", "=== Starting scan of directory: ${dir.name} ===")
 
@@ -258,29 +279,22 @@ object DirectoryManager {
                     yield()
 
                     if (file.isDirectory) {
-                        val isInDirectoryList = directoryDocumentFiles.any { savedDir ->
-                            isSameDirectory(file, savedDir)
-                        }
-
-                        if (!isInDirectoryList) {
-                            scanDirectory(file, depth + 1)
-                        }
+                        val isInDirectoryList = directoryDocumentFiles.any { savedDir -> isSameDirectory(file, savedDir) }
+                        if (!isInDirectoryList) scanDirectory(file, depth + 1)
                     } else if (file.isFile) {
                         val ext = file.name.orEmpty().substringAfterLast('.', "")
                         if (isSupportedArchive(ext)) {
-                            val previewPath = PreviewManager.getPreviewPath(
-                                context = context,
-                                fileName = file.name.orEmpty(),
-                                fileSize = file.length()
-                            )
+                            val fileName = file.name.orEmpty()
+                            val fileSize = file.length()
+                            val previewPath = PreviewManager.getPreviewPathFromSnapshot(previewsSnapshot, fileName, fileSize)
 
                             result.add(
                                 ArchiveInfo(
                                     filePath = file.uri.toString(),
-                                    originalName = file.name.orEmpty(),
-                                    displayName = file.name.orEmpty(),
+                                    originalName = fileName,
+                                    displayName = fileName,
                                     lastModified = file.lastModified(),
-                                    fileSize = file.length(),
+                                    fileSize = fileSize,
                                     previewPath = previewPath
                                 )
                             )
@@ -293,8 +307,6 @@ object DirectoryManager {
         }
 
         scanDirectory(dir)
-        Log.d("DirectoryManager", "Total archives found: ${result.size}")
-
         result
     }
 

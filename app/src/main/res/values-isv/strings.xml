@@ -165,4 +165,22 @@
 
     <string name="read_done">Skončena</string>
 
+    <string name="settings_preview_loading">Aplodovanje podgleda</string>
+    <string name="preview_loading_mode_full">Polno aplodovanje</string>
+    <string name="preview_loading_mode_dynamic">Dinamično aplodovanje</string>
+    <string name="preview_loading_mode_dynamic_unload">Dinamično aplodovanje s odlodovanjem</string>
+
+    <string name="reorder_handle">reorder handle</string>
+
+    <string name="settings_add_directory_button_position">Расположение кнопки добавления</string>
+    <string name="add_directory_button_position_top">Сверху широкая</string>
+    <string name="add_directory_button_position_bottom">Снизу широкая</string>
+    <string name="add_directory_button_position_left">Слева</string>
+    <string name="add_directory_button_position_right">Справа</string>
+    <string name="add_directory_button_position_bottom_side">Снизу</string>
+    <string name="add_directory_button_position_bottom_overlay">Снизу между страницами</string>
+
+    <string name="switch_to_list_view">Снизу между страницами</string>
+    <string name="switch_to_grid_view">Снизу между страницами</string>
+
 </resources>

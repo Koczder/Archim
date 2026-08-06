@@ -96,8 +96,6 @@ object ArchiveStructureManager {
 
             val file = getStructureFile(context, fileName, fileSize)
             file.writeText(gson.toJson(updatedStructure))
-
-            Log.d(TAG, "saveArchiveStructure: merged ${allLevels.size} new levels, total ${existingLevels.size}")
         } catch (e: Exception) {
             Log.e(TAG, "saveArchiveStructure: error", e)
         }
@@ -115,14 +113,11 @@ object ArchiveStructureManager {
         try {
             val file = getStructureFile(context, fileName, fileSize)
             if (!file.exists()) {
-                Log.d(TAG, "loadArchiveStructure: file not found for $fileName")
                 return null
             }
 
             val json = file.readText()
             val structure = gson.fromJson(json, ArchiveStructure::class.java)
-
-            Log.d(TAG, "loadArchiveStructure: loaded structure for $fileName with ${structure.levels.size} levels")
             return structure
         } catch (e: Exception) {
             Log.e(TAG, "loadArchiveStructure: error", e)
@@ -157,8 +152,6 @@ object ArchiveStructureManager {
 
             val file = getStructureFile(context, fileName, fileSize)
             file.writeText(gson.toJson(updatedStructure))
-
-            Log.d(TAG, "updateLevelImageIds: updated image order for level '$levelPath' with ${imageIds.size} images")
         } catch (e: Exception) {
             Log.e(TAG, "updateLevelImageIds: error", e)
         }
@@ -191,8 +184,6 @@ object ArchiveStructureManager {
 
             val file = getStructureFile(context, fileName, fileSize)
             file.writeText(gson.toJson(updatedStructure))
-
-            Log.d(TAG, "updateLevelReadCount: updated read count for level '$levelPath' to $readCount")
         } catch (e: Exception) {
             Log.e(TAG, "updateLevelReadCount: error", e)
         }
@@ -216,8 +207,6 @@ object ArchiveStructureManager {
 
             val file = getStructureFile(context, fileName, fileSize)
             file.writeText(gson.toJson(updatedStructure))
-
-            Log.d(TAG, "updateLastImageId: updated to $lastImageId")
         } catch (e: Exception) {
             Log.e(TAG, "updateLastImageId: error", e)
         }
@@ -250,8 +239,6 @@ object ArchiveStructureManager {
 
             val file = getStructureFile(context, fileName, fileSize)
             file.writeText(gson.toJson(updatedStructure))
-
-            Log.d(TAG, "updateLastImageIdLevel: updated to $lastImageIdLevel for level '$levelPath'")
         } catch (e: Exception) {
             Log.e(TAG, "updateLastImageIdLevel: error", e)
         }
@@ -277,8 +264,6 @@ object ArchiveStructureManager {
                 currentIndex = totalReadCount,
                 totalImages = structure.totalImages
             )
-
-            Log.d(TAG, "syncProgressToPreview: synced progress $totalReadCount/${structure.totalImages}")
         } catch (e: Exception) {
             Log.e(TAG, "syncProgressToPreview: error", e)
         }
@@ -295,7 +280,6 @@ object ArchiveStructureManager {
             val file = getStructureFile(context, fileName, fileSize)
             if (file.exists()) {
                 file.delete()
-                Log.d(TAG, "deleteArchiveStructure: deleted structure for $fileName")
             }
         } catch (e: Exception) {
             Log.e(TAG, "deleteArchiveStructure: error", e)

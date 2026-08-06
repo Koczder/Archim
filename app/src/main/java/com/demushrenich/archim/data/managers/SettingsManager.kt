@@ -7,6 +7,8 @@ import android.os.Build
 import android.util.Log
 import com.demushrenich.archim.domain.Language
 import com.demushrenich.archim.domain.PreviewGenerationMode
+import com.demushrenich.archim.domain.PreviewLoadingMode
+import com.demushrenich.archim.domain.ContentViewMode
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -15,6 +17,7 @@ import com.demushrenich.archim.domain.ArchiveOpenMode
 import com.demushrenich.archim.domain.ReadingDirection
 import com.demushrenich.archim.domain.BackgroundMode
 import com.demushrenich.archim.domain.CornerStyle
+import com.demushrenich.archim.domain.AddDirectoryButtonPosition
 import java.util.Locale
 
 class SettingsManager(private val context: Context) {
@@ -24,11 +27,18 @@ class SettingsManager(private val context: Context) {
         private const val PREF_LANGUAGE = "language"
         private const val PREF_DIRECTION = "reading_direction"
         private const val PREF_PREVIEW_GENERATION = "preview_generation_mode"
+        private const val PREF_PREVIEW_LOADING = "preview_loading_mode"
         private const val PREF_BACKGROUND_MODE = "background_mode"
         private const val PREF_ARCHIVE_CORNER_STYLE = "archive_corner_style"
         private const val PREF_IMAGE_CORNER_STYLE = "image_corner_style"
         private const val PREF_ARCHIVE_OPEN_MODE = "archive_open_mode"
+        private const val PREF_ADD_DIRECTORY_BUTTON_POSITION = "add_directory_button_position"
+        private const val PREF_CONTENT_VIEW_MODE = "content_view_mode"
         private const val TAG = "SettingsManager"
+
+        fun initializeAppLocale(context: Context) {
+            SettingsManager(context).initializeLanguage()
+        }
     }
 
     private val prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
@@ -42,6 +52,9 @@ class SettingsManager(private val context: Context) {
     private val _previewGenerationMode = MutableStateFlow(getCurrentPreviewGenerationMode())
     val previewGenerationMode: StateFlow<PreviewGenerationMode> = _previewGenerationMode.asStateFlow()
 
+    private val _previewLoadingMode = MutableStateFlow(getCurrentPreviewLoadingMode())
+    val previewLoadingMode: StateFlow<PreviewLoadingMode> = _previewLoadingMode.asStateFlow()
+
     private val _backgroundMode = MutableStateFlow(getCurrentBackgroundMode())
     val backgroundMode: StateFlow<BackgroundMode> = _backgroundMode.asStateFlow()
 
@@ -54,12 +67,21 @@ class SettingsManager(private val context: Context) {
     private val _archiveOpenMode = MutableStateFlow(getCurrentArchiveOpenMode())
     val archiveOpenMode: StateFlow<ArchiveOpenMode> = _archiveOpenMode.asStateFlow()
 
+    private val _addDirectoryButtonPosition = MutableStateFlow(getCurrentAddDirectoryButtonPosition())
+    val addDirectoryButtonPosition: StateFlow<AddDirectoryButtonPosition> = _addDirectoryButtonPosition.asStateFlow()
+
+    private val _contentViewMode = MutableStateFlow(getCurrentContentViewMode())
+    val contentViewMode: StateFlow<ContentViewMode> = _contentViewMode.asStateFlow()
+
     init {
         Log.d(TAG, "SettingsManager initialized")
         Log.d(TAG, "Current preview generation mode: ${_previewGenerationMode.value}")
+        Log.d(TAG, "Current preview loading mode: ${_previewLoadingMode.value}")
         Log.d(TAG, "Current background mode: ${_backgroundMode.value}")
         Log.d(TAG, "Current archive corner style: ${_archiveCornerStyle.value}")
         Log.d(TAG, "Current image corner style: ${_imageCornerStyle.value}")
+        Log.d(TAG, "Current add directory button position: ${_addDirectoryButtonPosition.value}")
+        Log.d(TAG, "Current content view mode: ${_contentViewMode.value}")
     }
 
     private fun getCurrentLanguage(): Language {
@@ -75,16 +97,20 @@ class SettingsManager(private val context: Context) {
     private fun getCurrentPreviewGenerationMode(): PreviewGenerationMode {
         val modeCode = prefs.getString(PREF_PREVIEW_GENERATION, PreviewGenerationMode.DIALOG.code)
             ?: PreviewGenerationMode.DIALOG.code
-        Log.d(TAG, "getCurrentPreviewGenerationMode: saved code=$modeCode")
         val mode = PreviewGenerationMode.fromCode(modeCode)
-        Log.d(TAG, "getCurrentPreviewGenerationMode: resolved mode=$mode")
+        return mode
+    }
+
+    private fun getCurrentPreviewLoadingMode(): PreviewLoadingMode {
+        val modeCode = prefs.getString(PREF_PREVIEW_LOADING, PreviewLoadingMode.DYNAMIC_UNLOAD.code)
+            ?: PreviewLoadingMode.DYNAMIC_UNLOAD.code
+        val mode = PreviewLoadingMode.fromCode(modeCode)
         return mode
     }
 
     private fun getCurrentBackgroundMode(): BackgroundMode {
         val modeName = prefs.getString(PREF_BACKGROUND_MODE, BackgroundMode.SYSTEM.name)
             ?: BackgroundMode.SYSTEM.name
-        Log.d(TAG, "getCurrentBackgroundMode: saved name=$modeName")
         return try {
             BackgroundMode.valueOf(modeName)
         } catch (_: Exception) {
@@ -111,49 +137,66 @@ class SettingsManager(private val context: Context) {
         return ArchiveOpenMode.fromCode(modeCode)
     }
 
+    private fun getCurrentAddDirectoryButtonPosition(): AddDirectoryButtonPosition {
+        val positionCode = prefs.getString(
+            PREF_ADD_DIRECTORY_BUTTON_POSITION,
+            AddDirectoryButtonPosition.TOP.code
+        ) ?: AddDirectoryButtonPosition.TOP.code
+        return AddDirectoryButtonPosition.fromCode(positionCode)
+    }
+
+    private fun getCurrentContentViewMode(): ContentViewMode {
+        val modeCode = prefs.getString(PREF_CONTENT_VIEW_MODE, ContentViewMode.LIST.code)
+            ?: ContentViewMode.LIST.code
+        return ContentViewMode.fromCode(modeCode)
+    }
+
     fun setArchiveOpenMode(mode: ArchiveOpenMode) {
-        Log.d(TAG, "setArchiveOpenMode: $mode")
         prefs.edit { putString(PREF_ARCHIVE_OPEN_MODE, mode.code) }
         _archiveOpenMode.value = mode
-        Log.d(TAG, "ArchiveOpenMode saved and StateFlow updated")
+    }
+
+    fun setAddDirectoryButtonPosition(position: AddDirectoryButtonPosition) {
+        prefs.edit { putString(PREF_ADD_DIRECTORY_BUTTON_POSITION, position.code) }
+        _addDirectoryButtonPosition.value = position
+    }
+
+    fun setContentViewMode(mode: ContentViewMode) {
+        prefs.edit { putString(PREF_CONTENT_VIEW_MODE, mode.code) }
+        _contentViewMode.value = mode
     }
 
     fun setReadingDirection(direction: ReadingDirection) {
-        Log.d(TAG, "setReadingDirection: $direction")
         prefs.edit { putString(PREF_DIRECTION, direction.name) }
         _readingDirection.value = direction
     }
 
     fun setPreviewGenerationMode(mode: PreviewGenerationMode) {
-        Log.d(TAG, "setPreviewGenerationMode: $mode (code=${mode.code})")
         prefs.edit { putString(PREF_PREVIEW_GENERATION, mode.code) }
         _previewGenerationMode.value = mode
-        Log.d(TAG, "PreviewGenerationMode saved and StateFlow updated")
+    }
+
+    fun setPreviewLoadingMode(mode: PreviewLoadingMode) {
+        prefs.edit { putString(PREF_PREVIEW_LOADING, mode.code) }
+        _previewLoadingMode.value = mode
     }
 
     fun setBackgroundMode(mode: BackgroundMode) {
-        Log.d(TAG, "setBackgroundMode: $mode")
         prefs.edit { putString(PREF_BACKGROUND_MODE, mode.name) }
         _backgroundMode.value = mode
-        Log.d(TAG, "BackgroundMode saved and StateFlow updated")
     }
 
     fun setArchiveCornerStyle(style: CornerStyle) {
-        Log.d(TAG, "setArchiveCornerStyle: $style")
         prefs.edit { putString(PREF_ARCHIVE_CORNER_STYLE, style.code) }
         _archiveCornerStyle.value = style
-        Log.d(TAG, "ArchiveCornerStyle saved and StateFlow updated")
     }
 
     fun setImageCornerStyle(style: CornerStyle) {
-        Log.d(TAG, "setImageCornerStyle: $style")
         prefs.edit { putString(PREF_IMAGE_CORNER_STYLE, style.code) }
         _imageCornerStyle.value = style
-        Log.d(TAG, "ImageCornerStyle saved and StateFlow updated")
     }
 
     fun setLanguage(language: Language) {
-        Log.d(TAG, "setLanguage: $language")
         prefs.edit { putString(PREF_LANGUAGE, language.code) }
 
         try {

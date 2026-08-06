@@ -17,7 +17,9 @@ import com.demushrenich.archim.domain.ArchiveOpenMode
 import com.demushrenich.archim.domain.ReadingDirection
 import com.demushrenich.archim.domain.Language
 import com.demushrenich.archim.domain.PreviewGenerationMode
+import com.demushrenich.archim.domain.PreviewLoadingMode
 import com.demushrenich.archim.domain.CornerStyle
+import com.demushrenich.archim.domain.AddDirectoryButtonPosition
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -28,12 +30,16 @@ fun SettingsScreen(
     onDirectionChange: (ReadingDirection) -> Unit,
     currentPreviewMode: PreviewGenerationMode,
     onPreviewModeChange: (PreviewGenerationMode) -> Unit,
+    currentLoadingMode: PreviewLoadingMode,
+    onLoadingModeChange: (PreviewLoadingMode) -> Unit,
     currentArchiveCornerStyle: CornerStyle,
     onArchiveCornerStyleChange: (CornerStyle) -> Unit,
     currentImageCornerStyle: CornerStyle,
     onImageCornerStyleChange: (CornerStyle) -> Unit,
     currentArchiveOpenMode: ArchiveOpenMode,
     onArchiveOpenModeChange: (ArchiveOpenMode) -> Unit,
+    currentAddDirectoryButtonPosition: AddDirectoryButtonPosition,
+    onAddDirectoryButtonPositionChange: (AddDirectoryButtonPosition) -> Unit,
     onCleanupOrphanedPreviews: () -> Unit,
     onBackClick: () -> Unit
 ) {
@@ -86,6 +92,10 @@ fun SettingsScreen(
                             currentMode = currentPreviewMode,
                             onModeChange = onPreviewModeChange
                         )
+                        PreviewLoadingSection(
+                            currentMode = currentLoadingMode,
+                            onModeChange = onLoadingModeChange
+                        )
                         ArchiveCornerStyleSection(
                             currentStyle = currentArchiveCornerStyle,
                             onStyleChange = onArchiveCornerStyleChange
@@ -93,6 +103,10 @@ fun SettingsScreen(
                         ArchiveOpenModeSection(
                             currentMode = currentArchiveOpenMode,
                             onModeChange = onArchiveOpenModeChange
+                        )
+                        AddDirectoryButtonPositionSection(
+                            currentPosition = currentAddDirectoryButtonPosition,
+                            onPositionChange = onAddDirectoryButtonPositionChange
                         )
                     }
                 }
@@ -329,6 +343,66 @@ private fun PreviewGenerationSection(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
+private fun PreviewLoadingSection(
+    currentMode: PreviewLoadingMode,
+    onModeChange: (PreviewLoadingMode) -> Unit
+) {
+    var expanded by remember { mutableStateOf(false) }
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp)
+    ) {
+        Text(
+            text = stringResource(R.string.settings_preview_loading),
+            style = MaterialTheme.typography.titleMedium,
+            modifier = Modifier.padding(bottom = 8.dp)
+        )
+
+        ExposedDropdownMenuBox(
+            expanded = expanded,
+            onExpandedChange = { expanded = !expanded },
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            OutlinedTextField(
+                value = getPreviewLoadingModeDisplayName(currentMode),
+                onValueChange = {},
+                readOnly = true,
+                trailingIcon = {
+                    Icon(Icons.Default.KeyboardArrowDown, contentDescription = null)
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .menuAnchor(MenuAnchorType.PrimaryNotEditable, enabled = true),
+                shape = RoundedCornerShape(16.dp),
+                colors = TextFieldDefaults.colors(
+                    focusedContainerColor = Color.Transparent,
+                    unfocusedContainerColor = Color.Transparent,
+                    disabledContainerColor = Color.Transparent
+                )
+            )
+
+            ExposedDropdownMenu(
+                expanded = expanded,
+                onDismissRequest = { expanded = false }
+            ) {
+                PreviewLoadingMode.entries.forEach { mode ->
+                    DropdownMenuItem(
+                        text = { Text(getPreviewLoadingModeDisplayName(mode)) },
+                        onClick = {
+                            onModeChange(mode)
+                            expanded = false
+                        }
+                    )
+                }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
 private fun ArchiveCornerStyleSection(
     currentStyle: CornerStyle,
     onStyleChange: (CornerStyle) -> Unit
@@ -517,6 +591,66 @@ private fun ArchiveOpenModeSection(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun AddDirectoryButtonPositionSection(
+    currentPosition: AddDirectoryButtonPosition,
+    onPositionChange: (AddDirectoryButtonPosition) -> Unit
+) {
+    var expanded by remember { mutableStateOf(false) }
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp)
+    ) {
+        Text(
+            text = stringResource(R.string.settings_add_directory_button_position),
+            style = MaterialTheme.typography.titleMedium,
+            modifier = Modifier.padding(bottom = 8.dp)
+        )
+
+        ExposedDropdownMenuBox(
+            expanded = expanded,
+            onExpandedChange = { expanded = !expanded },
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            OutlinedTextField(
+                value = getAddDirectoryButtonPositionDisplayName(currentPosition),
+                onValueChange = {},
+                readOnly = true,
+                trailingIcon = {
+                    Icon(Icons.Default.KeyboardArrowDown, contentDescription = null)
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .menuAnchor(MenuAnchorType.PrimaryNotEditable, enabled = true),
+                shape = RoundedCornerShape(16.dp),
+                colors = TextFieldDefaults.colors(
+                    focusedContainerColor = Color.Transparent,
+                    unfocusedContainerColor = Color.Transparent,
+                    disabledContainerColor = Color.Transparent
+                )
+            )
+
+            ExposedDropdownMenu(
+                expanded = expanded,
+                onDismissRequest = { expanded = false }
+            ) {
+                AddDirectoryButtonPosition.entries.forEach { position ->
+                    DropdownMenuItem(
+                        text = { Text(getAddDirectoryButtonPositionDisplayName(position)) },
+                        onClick = {
+                            onPositionChange(position)
+                            expanded = false
+                        }
+                    )
+                }
+            }
+        }
+    }
+}
+
 @Composable
 private fun CleanupSection(
     onCleanupClick: () -> Unit
@@ -562,9 +696,31 @@ private fun getPreviewModeDisplayName(mode: PreviewGenerationMode): String {
 }
 
 @Composable
+private fun getPreviewLoadingModeDisplayName(mode: PreviewLoadingMode): String {
+    return when (mode) {
+        PreviewLoadingMode.FULL -> stringResource(R.string.preview_loading_mode_full)
+        PreviewLoadingMode.DYNAMIC -> stringResource(R.string.preview_loading_mode_dynamic)
+        PreviewLoadingMode.DYNAMIC_UNLOAD -> stringResource(R.string.preview_loading_mode_dynamic_unload)
+    }
+}
+
+@Composable
 private fun getCornerStyleDisplayName(style: CornerStyle): String {
     return when (style) {
         CornerStyle.ROUNDED -> stringResource(R.string.corner_style_rounded)
         CornerStyle.SQUARE -> stringResource(R.string.corner_style_square)
+    }
+}
+
+@Composable
+private fun getAddDirectoryButtonPositionDisplayName(position: AddDirectoryButtonPosition): String {
+    return when (position) {
+        AddDirectoryButtonPosition.TOP -> stringResource(R.string.add_directory_button_position_top)
+        AddDirectoryButtonPosition.BOTTOM -> stringResource(R.string.add_directory_button_position_bottom)
+        AddDirectoryButtonPosition.LEFT -> stringResource(R.string.add_directory_button_position_left)
+        AddDirectoryButtonPosition.RIGHT -> stringResource(R.string.add_directory_button_position_right)
+        AddDirectoryButtonPosition.BOTTOM_SIDE -> stringResource(R.string.add_directory_button_position_bottom_side)
+        AddDirectoryButtonPosition.BNBOVERLAY -> stringResource(R.string.add_directory_button_position_bottom_overlay)
+
     }
 }

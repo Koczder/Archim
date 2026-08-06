@@ -13,12 +13,16 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import coil.ImageLoader
+import coil.compose.AsyncImagePainter
 import coil.compose.rememberAsyncImagePainter
-import coil.request.ImageRequest
+import coil.imageLoader
 import com.demushrenich.archim.R
 import com.demushrenich.archim.data.ArchiveInfo
 import com.demushrenich.archim.domain.CornerStyle
 import com.demushrenich.archim.domain.utils.archiveFormat
+import com.demushrenich.archim.domain.utils.buildPreviewImageRequest
+import com.demushrenich.archim.domain.utils.previewCacheKey
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*
@@ -40,10 +44,27 @@ fun formatFileSize(bytes: Long): String {
 @Composable
 fun ArchiveItemComponent(
     archive: ArchiveInfo,
-    isImageLoaded: Boolean,
+    isPreviewAlreadyLoaded: Boolean,
+    onPreviewLoaded: (String) -> Unit,
     cornerStyle: CornerStyle = CornerStyle.ROUNDED,
+    imageLoader: ImageLoader = LocalContext.current.imageLoader,
     modifier: Modifier = Modifier
 ) {
+    val context = LocalContext.current
+    val previewPath = archive.previewPath
+    val hasPreviewFile = previewPath != null && File(previewPath).exists()
+
+    val painter = if (hasPreviewFile) {
+        rememberAsyncImagePainter(
+            model = buildPreviewImageRequest(context, previewPath!!),
+            imageLoader = imageLoader,
+            onSuccess = { onPreviewLoaded(previewCacheKey(previewPath)) }
+        )
+    } else null
+
+    val isImageLoaded = isPreviewAlreadyLoaded ||
+            (painter != null && painter.state is AsyncImagePainter.State.Success)
+
     val alpha by animateFloatAsState(
         targetValue = if (isImageLoaded) 1f else 0f,
         animationSpec = tween(400, easing = EaseOutCubic),
@@ -61,19 +82,14 @@ fun ArchiveItemComponent(
     }
 
     Row(modifier = modifier.fillMaxWidth().padding(8.dp)) {
-        if (archive.previewPath != null && File(archive.previewPath).exists()) {
+        if (hasPreviewFile && painter != null) {
             Card(
                 modifier = Modifier.width(80.dp).height(100.dp),
                 shape = cardShape
             ) {
                 Box(Modifier.fillMaxSize()) {
                     Image(
-                        painter = rememberAsyncImagePainter(
-                            model = ImageRequest.Builder(LocalContext.current)
-                                .data(File(archive.previewPath))
-                                .crossfade(false)
-                                .build()
-                        ),
+                        painter = painter,
                         contentDescription = archive.displayName,
                         modifier = Modifier
                             .fillMaxSize()

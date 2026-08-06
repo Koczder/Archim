@@ -11,14 +11,38 @@ import net.sf.sevenzipjbinding.ExtractOperationResult
 import net.sf.sevenzipjbinding.SevenZip
 import java.io.File
 import com.demushrenich.archim.domain.ImageItem
+import com.demushrenich.archim.domain.MediaType
 
 class PasswordRequiredException : Exception("Archive requires password")
 class WrongPasswordException : Exception("Incorrect password")
 class ExtractionCancelledException : Exception("Extraction cancelled")
 
+private val IMAGE_EXTENSIONS = setOf("png", "jpg", "jpeg", "webp", "bmp", "heif", "heic", "gif", "svg", "tiff", "tif")
+private val VIDEO_EXTENSIONS = setOf("mp4", "mkv", "webm", "3gp", "mov", "avi")
+private val PDF_EXTENSIONS = setOf("pdf")
+
 fun isImageFile(filename: String): Boolean {
-    val exts = listOf("png","jpg","jpeg","webp","bmp","heif","heic","gif","tiff","tif")
-    return exts.any { filename.lowercase().endsWith(".$it") }
+    val lower = filename.lowercase()
+    return IMAGE_EXTENSIONS.any { lower.endsWith(".$it") }
+}
+
+fun isVideoFile(filename: String): Boolean {
+    val lower = filename.lowercase()
+    return VIDEO_EXTENSIONS.any { lower.endsWith(".$it") }
+}
+
+fun isPdfFile(filename: String): Boolean {
+    val lower = filename.lowercase()
+    return PDF_EXTENSIONS.any { lower.endsWith(".$it") }
+}
+
+fun isSupportedMediaFile(filename: String): Boolean =
+    isImageFile(filename) || isVideoFile(filename) || isPdfFile(filename)
+
+fun mediaTypeOf(filename: String): MediaType = when {
+    isVideoFile(filename) -> MediaType.VIDEO
+    isPdfFile(filename) -> MediaType.PDF
+    else -> MediaType.IMAGE
 }
 
 fun getFileExtension(uri: Uri): String =
@@ -78,18 +102,15 @@ suspend fun extractFirstImageFromArchive(
         FileDescriptorInStream(pfd.fileDescriptor).use { inStream ->
             SevenZip.openInArchive(null, inStream, password).use { inArchive ->
                 val simple = inArchive.simpleInterface
+                val archiveItems = simple.archiveItems
 
-                if (simple.archiveItems.any { it.isEncrypted } && password.isNullOrEmpty()) {
+                if (archiveItems.any { it.isEncrypted } && password.isNullOrEmpty()) {
                     throw PasswordRequiredException()
                 }
 
                 onProgress(context.getString(R.string.extracting_finding_first_image))
 
-                val sortedItems = simple.archiveItems
-                    .filter { !it.isFolder && it.path != null }
-                    .sortedBy { it.path!!.lowercase() }
-
-                for (item in sortedItems) {
+                for (item in archiveItems) {
                     coroutineContext.ensureActive()
 
                     val name = item.path!!
@@ -146,6 +167,16 @@ suspend fun extractImagesFromArchive(
     onProgress: (Float, String) -> Unit
 ): List<ImageItem> = withContext(Dispatchers.IO) {
     val entries = mutableListOf<ImageItem>()
+    var lastProgressUpdate = 0L
+    val progressThrottleMs = 100L
+
+    fun emitProgress(progress: Float, message: String, force: Boolean = false) {
+        val now = System.currentTimeMillis()
+        if (force || now - lastProgressUpdate >= progressThrottleMs) {
+            onProgress(progress, message)
+            lastProgressUpdate = now
+        }
+    }
 
     onProgress(0.05f, context.getString(R.string.extracting_opening_archive))
 
@@ -153,10 +184,11 @@ suspend fun extractImagesFromArchive(
         FileDescriptorInStream(pfd.fileDescriptor).use { inStream ->
             SevenZip.openInArchive(null, inStream, password).use { inArchive ->
                 val simple = inArchive.simpleInterface
+                val archiveItems = simple.archiveItems
                 val totalItems = simple.archiveItems.size
                 var processedItems = 0
 
-                if (simple.archiveItems.any { it.isEncrypted } && password.isNullOrEmpty()) {
+                if (archiveItems.any { it.isEncrypted } && password.isNullOrEmpty()) {
                     throw PasswordRequiredException()
                 }
 
@@ -164,31 +196,29 @@ suspend fun extractImagesFromArchive(
 
                 val largeArchiveDir = File(context.cacheDir, "largearchive").apply { mkdirs() }
 
-                for (item in simple.archiveItems) {
+                for (item in archiveItems) {
                     coroutineContext.ensureActive()
-
                     processedItems++
                     val progress = 0.1f + (processedItems.toFloat() / totalItems) * 0.9f
 
                     val name = item.path ?: continue
                     if (item.isFolder) {
-                        entries.add(
-                            ImageItem(
-                                fileName = name.substringAfterLast('/').ifEmpty { name },
-                                creationTime = System.currentTimeMillis(),
-                                archivePath = name.trimEnd('/'),
-                                isFolder = true
-                            )
-                        )
+                        entries.add(ImageItem(
+                            fileName = name.substringAfterLast('/').ifEmpty { name },
+                            creationTime = System.currentTimeMillis(),
+                            archivePath = name.trimEnd('/'),
+                            isFolder = true
+                        ))
                         continue
                     }
 
-                    if (!isImageFile(name)) {
-                        onProgress(progress, context.getString(R.string.extracting_skipping_file, name.substringAfterLast('/')))
+                    if (!isSupportedMediaFile(name)) {
+                        emitProgress(progress, context.getString(R.string.extracting_skipping_file, name.substringAfterLast('/')))
                         continue
                     }
 
                     val fileName = name.substringAfterLast('/')
+                    val type = mediaTypeOf(name)
                     onProgress(progress, context.getString(R.string.extracting_unpacking_file, fileName))
 
                     val creationTime = when {
@@ -198,7 +228,13 @@ suspend fun extractImagesFromArchive(
                         else -> System.currentTimeMillis()
                     }
 
-                    val tempFile = File.createTempFile("img_", ".webp", largeArchiveDir)
+                    val tempExt = when (type) {
+                        MediaType.VIDEO -> "." + fileName.substringAfterLast('.', "mp4")
+                        MediaType.PDF -> ".pdf"
+                        MediaType.IMAGE -> ".webp"
+                    }
+                    val tempFilePrefix = if (type == MediaType.IMAGE) "img_" else "media_"
+                    val tempFile = File.createTempFile(tempFilePrefix, tempExt, largeArchiveDir)
 
                     try {
                         tempFile.outputStream().use { fos ->
@@ -215,15 +251,35 @@ suspend fun extractImagesFromArchive(
                             }
                         }
 
-                        entries.add(
-                            ImageItem(
-                                filePath = tempFile.absolutePath,
-                                fileName = fileName,
-                                creationTime = creationTime,
-                                archivePath = name,
-                                isFolder = false
+                        if (type == MediaType.PDF) {
+                            entries.addAll(
+                                renderPdfToImageItems(
+                                    context = context,
+                                    pdfFile = tempFile,
+                                    archivePathPrefix = name
+                                ) { page, total ->
+                                    val pageSliceWidth = 0.9f / totalItems
+                                    val pageProgress = (progress - pageSliceWidth) + (page.toFloat() / total) * pageSliceWidth
+                                    emitProgress(
+                                        pageProgress.coerceIn(0f, 0.99f),
+                                        context.getString(R.string.extracting_unpacking_file, "$fileName ($page/$total)"),
+                                        force = true
+                                    )
+                                }
                             )
-                        )
+                            tempFile.delete()
+                        } else {
+                            entries.add(
+                                ImageItem(
+                                    filePath = tempFile.absolutePath,
+                                    fileName = fileName,
+                                    creationTime = creationTime,
+                                    archivePath = name,
+                                    mediaType = type,
+                                    isFolder = false
+                                )
+                            )
+                        }
                     } catch (e: ExtractionCancelledException) {
                         tempFile.delete()
                         throw e

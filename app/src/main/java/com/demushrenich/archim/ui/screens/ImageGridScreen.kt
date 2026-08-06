@@ -34,9 +34,12 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.filled.Folder
 import com.demushrenich.archim.data.ArchiveNavigationState
 import android.util.Log
+import androidx.compose.foundation.background
 import androidx.compose.foundation.lazy.grid.LazyGridState
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.res.stringResource
+import coil.request.videoFrameMillis
 import com.demushrenich.archim.R
 import com.demushrenich.archim.ui.components.SortingComponent
 import com.demushrenich.archim.domain.utils.SortingUtils
@@ -46,6 +49,7 @@ import com.demushrenich.archim.domain.ReadingDirection
 import com.demushrenich.archim.domain.SortCategory
 import com.demushrenich.archim.data.managers.ArchiveStructureManager
 import com.demushrenich.archim.domain.CornerStyle
+import com.demushrenich.archim.domain.MediaType
 
 
 @SuppressLint("ConfigurationScreenWidthHeight")
@@ -155,7 +159,6 @@ fun ImageGridScreen(
         LazyGridState(firstVisibleItemIndex = startIndex)
     }
 
-    BackHandler { onBack() }
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
@@ -333,12 +336,28 @@ fun ImageGridScreen(
                                             model = ImageRequest.Builder(context)
                                                 .data(imageItem.data ?: imageItem.filePath)
                                                 .memoryCacheKey(imageItem.id)
+                                                .videoFrameMillis(1000)
                                                 .build()
                                         ),
                                         contentDescription = imageItem.fileName,
                                         contentScale = ContentScale.Crop,
                                         modifier = Modifier.fillMaxSize()
                                     )
+
+                                    if (imageItem.mediaType == MediaType.VIDEO) {
+                                        Box(
+                                            modifier = Modifier
+                                                .align(Alignment.Center)
+                                                .background(Color.Black.copy(alpha = 0.4f), shape = androidx.compose.foundation.shape.CircleShape)
+                                                .padding(8.dp)
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Default.PlayArrow,
+                                                contentDescription = null,
+                                                tint = Color.White
+                                            )
+                                        }
+                                    }
 
                                     val isGlobalLast = archiveStructure != null && archiveStructure.lastImageId == imageItem.id
                                     val isLevelLast = lastImageIdLevel != null && lastImageIdLevel == imageItem.id

@@ -63,9 +63,6 @@ object ImageViewerUtils {
                 fileName = fileName,
                 fileSize = fileSize
             )
-
-            Log.d("ImageViewer", "Updated progress: readCount=$readCount for level=$levelPath, lastImageId=${currentImage.id}")
-
         } catch (e: Exception) {
             Log.e("ImageViewer", "Error updating progress: ${e.message}", e)
         }

@@ -1,11 +1,19 @@
 package com.demushrenich.archim.data
 
 data class PreviewInfo(
-    val archiveUri: String,
-    val previewPath: String,
+    val archiveUri: String? = null,
+    val archiveUris: Set<String>? = null,
+    val previewPath: String = "",
     val timestamp: Long = System.currentTimeMillis(),
     val readingProgress: ReadingProgress? = null
-)
+) {
+
+    fun getAllUris(): Set<String> {
+        val uris = (archiveUris ?: emptySet()).toMutableSet()
+        if (archiveUri != null) uris.add(archiveUri)
+        return uris
+    }
+}
 
 data class ReadingProgress(
     val currentIndex: Int,

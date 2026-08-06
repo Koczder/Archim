@@ -21,7 +21,8 @@ import androidx.core.net.toUri
 import com.demushrenich.archim.data.managers.ArchiveStructureManager
 import com.demushrenich.archim.data.managers.DirectoryManager
 import com.demushrenich.archim.data.managers.PreviewManager
-import com.demushrenich.archim.data.managers.SettingsManager
+import com.demushrenich.archim.domain.repositories.CacheRepository
+import com.demushrenich.archim.domain.repositories.SettingsRepository
 import com.demushrenich.archim.domain.utils.PasswordRequiredException
 import com.demushrenich.archim.domain.utils.SortingUtils
 import com.demushrenich.archim.domain.utils.WrongPasswordException
@@ -32,9 +33,17 @@ import com.demushrenich.archim.domain.utils.generatePreviewFromImage
 import com.demushrenich.archim.domain.utils.getFileExtension
 import com.demushrenich.archim.domain.utils.isSupportedArchive
 import com.demushrenich.archim.domain.utils.clearArchiveImagesFromCache
-import kotlinx.coroutines.flow.Flow
+import com.demushrenich.archim.domain.utils.renderPdfFromUri
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.update
 
-class MainViewModel : ViewModel() {
+class MainViewModel(
+    private val settingsRepository: SettingsRepository, private val cacheRepository: CacheRepository
+) : ViewModel() {
 
     private val _uiState = MutableStateFlow(AppUiState())
     val uiState: StateFlow<AppUiState> = _uiState.asStateFlow()
@@ -50,7 +59,6 @@ class MainViewModel : ViewModel() {
 
     private val newRootDirectoryUris = mutableSetOf<String>()
     private var extractionJob: Job? = null
-    private var settingsManager: SettingsManager? = null
     private var archiveStructureSaved = false
 
     private var currentArchiveFile: DocumentFile? = null
@@ -59,45 +67,74 @@ class MainViewModel : ViewModel() {
 
     private var directoriesLoaded = false
 
-    fun initializeSettings(context: Context) {
-        if (settingsManager != null) return
-
-        settingsManager = SettingsManager(context).apply { initializeLanguage() }
-
-        collectSetting(settingsManager!!.currentLanguage) {
-            copy(currentLanguage = it)
-        }
-        collectSetting(settingsManager!!.readingDirection) {
-            copy(readingDirection = it)
-        }
-        collectSetting(settingsManager!!.previewGenerationMode) {
-            copy(previewGenerationMode = it)
-        }
-        collectSetting(settingsManager!!.backgroundMode) {
-            copy(backgroundMode = it)
-        }
-        collectSetting(settingsManager!!.archiveCornerStyle) {
-            copy(archiveCornerStyle = it)
-        }
-        collectSetting(settingsManager!!.imageCornerStyle) {
-            copy(imageCornerStyle = it)
-        }
-        collectSetting(settingsManager!!.archiveOpenMode) {
-            copy(archiveOpenMode = it)
-        }
+    sealed class ToastEvent {
+        data class PreviewsDeleted(val count: Int) : ToastEvent()
+        data class CleanupError(val message: String) : ToastEvent()
     }
 
-    private fun <T> collectSetting(
-        flow: Flow<T>,
-        update: AppSettings.(T) -> AppSettings
-    ) {
-        viewModelScope.launch {
-            flow.collect { value ->
-                _uiState.value = _uiState.value.updateSettings {
-                    update(value)
-                }
+    private val _toastEvents = MutableSharedFlow<ToastEvent>(replay = 0)
+    val toastEvents: SharedFlow<ToastEvent> = _toastEvents.asSharedFlow()
+
+    init {
+        settingsRepository.currentLanguage
+            .onEach { language ->
+                _uiState.value = _uiState.value.updateSettings { copy(currentLanguage = language) }
             }
-        }
+            .launchIn(viewModelScope)
+
+        settingsRepository.readingDirection
+            .onEach { direction ->
+                _uiState.value = _uiState.value.updateSettings { copy(readingDirection = direction) }
+            }
+            .launchIn(viewModelScope)
+
+        settingsRepository.previewGenerationMode
+            .onEach { mode ->
+                _uiState.value = _uiState.value.updateSettings { copy(previewGenerationMode = mode) }
+            }
+            .launchIn(viewModelScope)
+
+        settingsRepository.previewLoadingMode
+            .onEach { mode ->
+                _uiState.value = _uiState.value.updateSettings { copy(previewLoadingMode = mode) }
+            }
+            .launchIn(viewModelScope)
+
+        settingsRepository.backgroundMode
+            .onEach { mode ->
+                _uiState.value = _uiState.value.updateSettings { copy(backgroundMode = mode) }
+            }
+            .launchIn(viewModelScope)
+
+        settingsRepository.archiveCornerStyle
+            .onEach { style ->
+                _uiState.value = _uiState.value.updateSettings { copy(archiveCornerStyle = style) }
+            }
+            .launchIn(viewModelScope)
+
+        settingsRepository.imageCornerStyle
+            .onEach { style ->
+                _uiState.value = _uiState.value.updateSettings { copy(imageCornerStyle = style) }
+            }
+            .launchIn(viewModelScope)
+
+        settingsRepository.archiveOpenMode
+            .onEach { mode ->
+                _uiState.value = _uiState.value.updateSettings { copy(archiveOpenMode = mode) }
+            }
+            .launchIn(viewModelScope)
+
+        settingsRepository.addDirectoryButtonPosition
+            .onEach { position ->
+                _uiState.value = _uiState.value.updateSettings { copy(addDirectoryButtonPosition = position) }
+            }
+            .launchIn(viewModelScope)
+
+        settingsRepository.contentViewMode
+            .onEach { mode ->
+                _uiState.value = _uiState.value.updateSettings { copy(contentViewMode = mode) }
+            }
+            .launchIn(viewModelScope)
     }
 
     fun showSettings() {
@@ -108,28 +145,50 @@ class MainViewModel : ViewModel() {
         _uiState.value = _uiState.value.updateSettings { copy(showSettings = false) }
     }
 
-    fun changeArchiveOpenMode(mode: ArchiveOpenMode) {
-        settingsManager?.setArchiveOpenMode(mode)
-    }
-
     fun changeLanguage(language: Language) {
-        settingsManager?.setLanguage(language)
-    }
-
-    fun changePreviewGenerationMode(mode: PreviewGenerationMode) {
-        settingsManager?.setPreviewGenerationMode(mode)
+        settingsRepository.setLanguage(language)
     }
 
     fun changeReadingDirection(direction: ReadingDirection) {
-        settingsManager?.setReadingDirection(direction)
+        settingsRepository.setReadingDirection(direction)
+    }
+
+    fun changePreviewGenerationMode(mode: PreviewGenerationMode) {
+        settingsRepository.setPreviewGenerationMode(mode)
+    }
+
+    fun changePreviewLoadingMode(mode: PreviewLoadingMode) {
+        settingsRepository.setPreviewLoadingMode(mode)
+    }
+
+    fun changeBackgroundMode(mode: BackgroundMode) {
+        settingsRepository.setBackgroundMode(mode)
     }
 
     fun changeArchiveCornerStyle(style: CornerStyle) {
-        settingsManager?.setArchiveCornerStyle(style)
+        settingsRepository.setArchiveCornerStyle(style)
     }
 
     fun changeImageCornerStyle(style: CornerStyle) {
-        settingsManager?.setImageCornerStyle(style)
+        settingsRepository.setImageCornerStyle(style)
+    }
+
+    fun changeArchiveOpenMode(mode: ArchiveOpenMode) {
+        settingsRepository.setArchiveOpenMode(mode)
+    }
+
+    fun changeAddDirectoryButtonPosition(position: AddDirectoryButtonPosition) {
+        settingsRepository.setAddDirectoryButtonPosition(position)
+    }
+
+    fun changeContentViewMode(mode: ContentViewMode) {
+        settingsRepository.setContentViewMode(mode)
+    }
+
+    fun toggleContentViewMode() {
+        val current = _uiState.value.settings.contentViewMode
+        val next = if (current == ContentViewMode.GRID) ContentViewMode.LIST else ContentViewMode.GRID
+        changeContentViewMode(next)
     }
 
     fun getDirectoryContentViewModel(): DirectoryContentViewModel = directoryContentViewModel
@@ -161,7 +220,6 @@ class MainViewModel : ViewModel() {
         archiveStructureSaved = false
         currentArchiveStructure = null
         _uiState.value = _uiState.value.updateArchive { copy(currentArchiveUri = uri) }
-        Log.d("ArchiveDebug", "handleArchivePicked: opening new archive $uri, old was ${currentArchiveFile?.uri}")
         loadArchive(context, uri, null)
     }
 
@@ -202,59 +260,19 @@ class MainViewModel : ViewModel() {
         _uiState.value = _uiState.value.updateImageView { copy(selectedImageIndex = index) }
     }
 
-    fun cleanupOrphanedPreviews(context: Context) {
-        viewModelScope.launch(Dispatchers.IO) {
-            try {
-                val deletedCount = PreviewManager.cleanupOrphanedPreviews(context)
-                withContext(Dispatchers.Main) {
-                    android.widget.Toast.makeText(
-                        context,
-                        context.getString(R.string.previews_deleted, deletedCount),
-                        android.widget.Toast.LENGTH_SHORT
-                    ).show()
+    fun cleanupOrphanedPreviews() {
+        viewModelScope.launch {
+            cacheRepository.cleanupOrphanedPreviews()
+                .onSuccess { deletedCount ->
+                    _toastEvents.emit(ToastEvent.PreviewsDeleted(deletedCount))
                 }
-                Log.d("MainViewModel", "Cleaned up files: $deletedCount")
-            } catch (e: Exception) {
-                withContext(Dispatchers.Main) {
-                    android.widget.Toast.makeText(
-                        context,
-                        context.getString(R.string.cleanup_error, e.message ?: ""),
-                        android.widget.Toast.LENGTH_SHORT
-                    ).show()
+                .onFailure { exception ->
+                    _toastEvents.emit(
+                        ToastEvent.CleanupError(exception.message ?: "Unknown")
+                    )
                 }
-                Log.e("MainViewModel", "Error cleaning up previews", e)
-            }
         }
     }
-
-    fun changeBackgroundMode(mode: BackgroundMode) {
-        settingsManager?.setBackgroundMode(mode)
-    }
-
-    fun clearAllCache(context: Context) {
-        viewModelScope.launch(Dispatchers.IO) {
-            try {
-                clearAllCache(context)
-                withContext(Dispatchers.Main) {
-                    android.widget.Toast.makeText(
-                        context,
-                        context.getString(R.string.cache_cleared),
-                        android.widget.Toast.LENGTH_SHORT
-                    ).show()
-                }
-            } catch (e: Exception) {
-                Log.e("MainViewModel", "Cleanup error:", e)
-                withContext(Dispatchers.Main) {
-                    android.widget.Toast.makeText(
-                        context,
-                        context.getString(R.string.cache_clear_error),
-                        android.widget.Toast.LENGTH_SHORT
-                    ).show()
-                }
-            }
-        }
-    }
-
 
     fun getViewerImagesList(): List<ImageItem> = viewerImagesList
 
@@ -284,7 +302,6 @@ class MainViewModel : ViewModel() {
                 allImages.find { it.id == imageId && !it.isFolder }
             }
 
-            Log.d("MainViewModel", "Loaded ${orderedImages.size} images from JSON for level: ${currentLevel.path}")
             return orderedImages
 
         } catch (e: Exception) {
@@ -314,8 +331,6 @@ class MainViewModel : ViewModel() {
                 currentArchiveStructure = ArchiveStructureManager.loadArchiveStructure(
                     context, fileName, fileSize
                 )
-
-                Log.d("MainViewModel", "Archive structure updated for $fileName")
             }
         } catch (e: Exception) {
             Log.e("MainViewModel", "Error saving archive structure", e)
@@ -514,8 +529,6 @@ class MainViewModel : ViewModel() {
             currentArchiveStructure = ArchiveStructureManager.loadArchiveStructure(
                 context, fileName, fileSize
             )
-
-            Log.d("MainViewModel", "Sort type and order saved for level: ${currentLevel.path}")
         } catch (e: Exception) {
             Log.e("MainViewModel", "Error saving sort type and order", e)
         }
@@ -568,12 +581,21 @@ class MainViewModel : ViewModel() {
         }
     }
 
+    fun reorderDirectories(context: Context, newOrder: List<DirectoryItem>) {
+        _directories.clear()
+        _directories.addAll(newOrder)
+        _navigationState.setRootLevel(_directories.toList())
+
+        viewModelScope.launch(Dispatchers.IO) {
+            DirectoryManager.saveDirectoriesOrder(context, newOrder)
+        }
+    }
+
     fun getNewRootDirectoryUris(): Set<String> = newRootDirectoryUris
     fun removeNewDirectoryUri(uri: String) { newRootDirectoryUris.remove(uri) }
     fun canNavigateBackInArchive(): Boolean = archiveNavState?.canNavigateBack() == true
 
     private fun loadArchive(context: Context, uri: Uri, password: String?) {
-        Log.d("ArchiveDebug", "loadArchive: setting currentArchiveFile to $uri")
         archiveStructureSaved = false
         currentArchiveStructure = null
         currentArchiveFile = DocumentFile.fromSingleUri(context, uri)
@@ -726,25 +748,17 @@ class MainViewModel : ViewModel() {
             val targetItem = nav.allImages[globalIndex]
             val targetId = targetItem.id
 
-            Log.d("MainViewModel", "continueReading: targetId=$targetId, globalIndex=$globalIndex")
-
             val pathToTarget = nav.findPathToImage(targetId) ?: run {
-                Log.w("MainViewModel", "Path not found for imageId: $targetId")
                 return@launch
             }
-
-            Log.d("MainViewModel", "continueReading: pathToTarget=$pathToTarget")
 
             nav.navigateToPath(pathToTarget)
 
             val currentEntries = nav.getCurrentLevel()?.entries ?: emptyList()
-            Log.d("MainViewModel", "continueReading: currentEntries size=${currentEntries.size}")
-
             withContext(Dispatchers.IO) {
                 val sortType = loadSortTypeForCurrentLevel(context) ?: SortType.NAME_ASC
                 val sortedImages = SortingUtils.sortImages(currentEntries, sortType)
 
-                Log.d("MainViewModel", "continueReading: sortType=$sortType, sortedImages size=${sortedImages.size}")
                 withContext(Dispatchers.Main) {
                     _uiState.value = _uiState.value.updateImageView {
                         copy(
@@ -762,9 +776,6 @@ class MainViewModel : ViewModel() {
                 }
 
                 val sortedIndex = filesOnly.indexOfFirst { it.id == targetId }
-
-                Log.d("MainViewModel", "continueReading: filesOnly size=${filesOnly.size}, sortedIndex=$sortedIndex")
-
                 withContext(Dispatchers.Main) {
                     if (sortedIndex >= 0) {
                         viewerImagesList = filesOnly
@@ -794,8 +805,6 @@ class MainViewModel : ViewModel() {
             }
 
             val selectedImage = filesOnly[index]
-            Log.d("MainViewModel", "selectImage: index=$index, imageId=${selectedImage.id}")
-
             val imagesForViewer = getImageIdsForCurrentLevel(context)
 
             if (imagesForViewer.isEmpty()) {
@@ -815,9 +824,6 @@ class MainViewModel : ViewModel() {
                 viewerImagesList = imagesForViewer
 
                 val indexInJsonList = imagesForViewer.indexOfFirst { it.id == selectedImage.id }
-
-                Log.d("MainViewModel", "selectImage: using JSON list, viewerIndex=$indexInJsonList")
-
                 withContext(Dispatchers.Main) {
                     _uiState.value = _uiState.value.updateImageView {
                         copy(
@@ -830,7 +836,6 @@ class MainViewModel : ViewModel() {
             saveArchiveStructure(context)
             updateLastImageId(context, selectedImage.id)
             updateLastImageIdLevel(context, selectedImage.id)
-            Log.d("MainViewModel", "selectImage: completed, lastImageId and lastImageIdLevel updated to ${selectedImage.id}")
         }
     }
 
@@ -857,8 +862,6 @@ class MainViewModel : ViewModel() {
             currentArchiveStructure = ArchiveStructureManager.loadArchiveStructure(
                 context, fileName, fileSize
             )
-
-            Log.d("MainViewModel", "Updated lastImageIdLevel to: $imageId for level: ${currentLevel.path}")
         } catch (e: Exception) {
             Log.e("MainViewModel", "Error updating lastImageIdLevel", e)
         }
@@ -884,8 +887,6 @@ class MainViewModel : ViewModel() {
             currentArchiveStructure = ArchiveStructureManager.loadArchiveStructure(
                 context, fileName, fileSize
             )
-
-            Log.d("MainViewModel", "Updated lastImageId to: $imageId")
         } catch (e: Exception) {
             Log.e("MainViewModel", "Error updating lastImageId", e)
         }
@@ -910,7 +911,6 @@ class MainViewModel : ViewModel() {
             val imageIds = archiveNavState?.allImages?.map { it.id } ?: emptyList()
             if (imageIds.isNotEmpty()) {
                 clearArchiveImagesFromCache(context, imageIds)
-                Log.d("MainViewModel", "Cleared ${imageIds.size} images from cache")
             }
 
             archiveNavState = null
@@ -964,6 +964,32 @@ class MainViewModel : ViewModel() {
                 _directories.addAll(savedDirectories)
                 _navigationState.setRootLevel(savedDirectories)
                 directoriesLoaded = true
+            }
+        }
+    }
+
+    fun handleStandaloneMediaPicked(context: Context, uri: Uri) {
+        viewModelScope.launch {
+            val mime = context.contentResolver.getType(uri) ?: ""
+            when {
+                mime.startsWith("video/") -> {
+                    val item = ImageItem(
+                        filePath = uri.toString(), // ExoPlayer понимает content:// напрямую
+                        fileName = DocumentFile.fromSingleUri(context, uri)?.name ?: "video",
+                        mediaType = MediaType.VIDEO
+                    )
+                    _uiState.update { it.updateImageView { copy(images = listOf(item), selectedImageIndex = 0) } }
+                }
+                mime == "application/pdf" -> {
+                    _uiState.update { it.updateLoading { copy(isLoading = true) } }
+                    val pages = renderPdfFromUri(context, uri) { progress, msg ->
+                        _uiState.update { it.updateLoading { copy(extractionProgress = progress, currentFileName = msg) } }
+                    }
+                    _uiState.update {
+                        it.updateImageView { copy(images = pages, selectedImageIndex = 0) }
+                            .updateLoading { copy(isLoading = false) }
+                    }
+                }
             }
         }
     }

@@ -47,8 +47,8 @@ class DirectoryContentViewModel : ViewModel() {
     private var _currentPreviewProgress by mutableStateOf("")
     val currentPreviewProgress: String get() = _currentPreviewProgress
 
-    private var _loadedImages by mutableStateOf(setOf<String>())
-    val loadedImages: Set<String> get() = _loadedImages
+    private var _loadedPreviewKeys by mutableStateOf(setOf<String>())
+    val loadedPreviewKeys: Set<String> get() = _loadedPreviewKeys
 
     private var _shouldShowPreviewDialog by mutableStateOf(false)
     val shouldShowPreviewDialog: Boolean get() = _shouldShowPreviewDialog
@@ -203,17 +203,16 @@ class DirectoryContentViewModel : ViewModel() {
         val processedCount = AtomicInteger(0)
 
         val workers = min(16, archives.size.coerceAtLeast(1))
-
         val channel = Channel<ArchiveInfo>(capacity = archives.size)
 
-        val workerResults = List(workers) { mutableMapOf<String, String>() }
+        val workerResults = List(workers) { mutableListOf<PreviewManager.PreviewBatchEntry>() }
 
         archives.forEach { channel.send(it) }
         channel.close()
 
         val jobs = List(workers) { workerId ->
             launch(Dispatchers.IO) {
-                val localMap = workerResults[workerId]
+                val localList = workerResults[workerId]
 
                 for (archive in channel) {
                     if (!isActive) break
@@ -225,8 +224,6 @@ class DirectoryContentViewModel : ViewModel() {
                             context.getString(R.string.preview_processing_archive, currentCount, totalCount, archive.displayName)
                     }
 
-                    Log.d(TAG, "Worker $workerId processing ${archive.displayName} ($currentCount/$totalCount)")
-
                     try {
                         val previewPath = generatePreviewWithRetry(
                             context = context,
@@ -236,7 +233,14 @@ class DirectoryContentViewModel : ViewModel() {
                         )
 
                         if (previewPath != null) {
-                            localMap[archive.filePath] = previewPath
+                            localList.add(
+                                PreviewManager.PreviewBatchEntry(
+                                    archiveUri = archive.filePath,
+                                    previewPath = previewPath,
+                                    fileName = archive.originalName,
+                                    fileSize = archive.fileSize
+                                )
+                            )
                             updateArchivePreview(archive, previewPath, onUpdateArchives)
                         }
 
@@ -244,38 +248,18 @@ class DirectoryContentViewModel : ViewModel() {
                         Log.e(TAG, "Worker $workerId: error on ${archive.displayName}", e)
                     }
                 }
-
-                Log.d(TAG, "Worker $workerId finished, saved ${localMap.size} previews locally")
             }
         }
 
         jobs.joinAll()
-        val mergedResults = workerResults
-            .flatMap { it.entries }
-            .associate { it.toPair() }
 
+        val mergedResults = workerResults.flatten()
         Log.d(TAG, "Merging ${mergedResults.size} preview entries into prefs")
 
         withContext(Dispatchers.IO) {
-            mergedResults.forEach { (uri, previewPath) ->
-                try {
-                    val file = DocumentFile.fromSingleUri(context, uri.toUri())
-                    val fileName = file?.name ?: uri.substringAfterLast('/')
-                    val fileSize = file?.length() ?: 0L
-
-                    PreviewManager.savePreviewPath(
-                        context = context,
-                        archiveUri = uri,
-                        previewPath = previewPath,
-                        fileName = fileName,
-                        fileSize = fileSize
-                    )
-
-                } catch (e: Exception) {
-                    Log.e(TAG, "Failed to save merged preview for $uri", e)
-                }
-            }
+            PreviewManager.savePreviewPaths(context, mergedResults)
         }
+
         reloadAllPreviews(context, onUpdateArchives)
     }
 
@@ -301,8 +285,6 @@ class DirectoryContentViewModel : ViewModel() {
                     val file = File(previewPath)
                     if (file.exists() && file.length() > 0) {
                         file.inputStream().use { }
-
-                        Log.d(TAG, "Preview generated for ${archive.displayName}: $previewPath (attempt ${attempt + 1})")
                         return previewPath
                     } else {
                         Log.w(TAG, "Preview file not properly written, attempt ${attempt + 1}/$FILE_WRITE_RETRY_ATTEMPTS")
@@ -377,7 +359,6 @@ class DirectoryContentViewModel : ViewModel() {
 
             withContext(Dispatchers.Main) {
                 _archivesWithPreviews = updatedArchives
-                removeLoadedImage(archive.filePath)
                 onUpdateArchives?.invoke(updatedArchives)
             }
         }
@@ -386,34 +367,32 @@ class DirectoryContentViewModel : ViewModel() {
     private suspend fun getAllArchivesWithProgress(
         context: Context,
         dirUri: android.net.Uri
-    ): List<ArchiveInfo> {
+    ): List<ArchiveInfo> = withContext(Dispatchers.IO) {
         val allArchives = mutableListOf<ArchiveInfo>()
         var scannedCount = 0
+        var lastUpdateTime = System.currentTimeMillis()
+
+        val previewsSnapshot = PreviewManager.getPreviewsSnapshot(context)
 
         suspend fun scanRecursive(uri: android.net.Uri) {
             try {
-                if (scannedCount % 10 == 0) {
-                    _currentPreviewProgress = context.getString(R.string.preview_scanning_found_archives, allArchives.size)
-                    yield()
-                }
-
                 val documentFile = DocumentFile.fromTreeUri(context, uri) ?: return
 
                 documentFile.listFiles().forEach { file ->
                     scannedCount++
 
-                    when {
-                        file.isDirectory -> {
-                            scanRecursive(file.uri)
+                    val currentTime = System.currentTimeMillis()
+                    if (currentTime - lastUpdateTime > 300) {
+                        withContext(Dispatchers.Main) {
+                            _currentPreviewProgress = context.getString(R.string.preview_scanning_found_archives, allArchives.size)
                         }
-                        file.isFile && isArchiveFile(file.name) -> {
-                            val archiveInfo = createArchiveInfo(context, file)
-                            allArchives.add(archiveInfo)
+                        lastUpdateTime = currentTime
+                    }
 
-                            if (allArchives.size % 5 == 0) {
-                                _currentPreviewProgress = context.getString(R.string.preview_scanning_found_archives, allArchives.size)
-                                yield()
-                            }
+                    when {
+                        file.isDirectory -> scanRecursive(file.uri)
+                        file.isFile && isArchiveFile(file.name) -> {
+                            allArchives.add(createArchiveInfo(file, previewsSnapshot))
                         }
                     }
                 }
@@ -423,7 +402,7 @@ class DirectoryContentViewModel : ViewModel() {
         }
 
         scanRecursive(dirUri)
-        return allArchives
+        allArchives
     }
 
     private fun isArchiveFile(fileName: String?): Boolean {
@@ -432,12 +411,11 @@ class DirectoryContentViewModel : ViewModel() {
         return ArchiveFormats.SUPPORTED_EXTENSIONS.contains(extension)
     }
 
-    private fun createArchiveInfo(context: Context, file: DocumentFile): ArchiveInfo {
+    private fun createArchiveInfo(file: DocumentFile, previewsSnapshot: Map<String, PreviewInfo>): ArchiveInfo {
         val fileName = file.name ?: "unknown"
         val fileSize = file.length()
-        val previewPath = PreviewManager.getPreviewPath(context, fileName, fileSize)
-
-        val readingProgress = PreviewManager.getReadingProgressForPreview(context, fileName, fileSize)
+        val previewPath = PreviewManager.getPreviewPathFromSnapshot(previewsSnapshot, fileName, fileSize)
+        val readingProgress = PreviewManager.getReadingProgressFromSnapshot(previewsSnapshot, fileName, fileSize)
 
         return ArchiveInfo(
             filePath = file.uri.toString(),
@@ -465,7 +443,6 @@ class DirectoryContentViewModel : ViewModel() {
     fun clearPreviewForArchive(context: Context, archive: ArchiveInfo) {
         Log.d(TAG, "clearPreviewForArchive: ${archive.displayName}")
         PreviewManager.removePreviewAndProgressByUri(context, archive.filePath)
-        removeLoadedImage(archive.filePath)
         _archivesWithPreviews = _archivesWithPreviews.map {
             if (it.filePath == archive.filePath) it.copy(previewPath = null, readingProgress = null) else it
         }
@@ -477,36 +454,32 @@ class DirectoryContentViewModel : ViewModel() {
         directoryUri: String,
         onUpdateArchives: ((List<ArchiveInfo>) -> Unit)?
     ) {
-        Log.d(TAG, "loadArchivesWithPreviewsAndSort: ${archives.size} archives for $directoryUri")
         viewModelScope.launch {
             if (_currentDirectoryUri != directoryUri) {
-                Log.d(TAG, "Directory changed from $_currentDirectoryUri to $directoryUri, resetting state")
                 _currentDirectoryUri = directoryUri
                 _currentSortType = null
             }
-            val archivesWithPreviews = archives.map { archive ->
-                val documentFile = DocumentFile.fromSingleUri(context, archive.filePath.toUri())
-                val fileName = documentFile?.name ?: archive.originalName
-                val fileSize = documentFile?.length() ?: archive.fileSize
 
-                val previewPath = PreviewManager.getPreviewPath(context, fileName, fileSize)
+            val archivesWithPreviews = withContext(Dispatchers.IO) {
+                val previewsSnapshot = PreviewManager.getPreviewsSnapshot(context)
+                archives.map { archive ->
+                    async {
+                        val documentFile = DocumentFile.fromSingleUri(context, archive.filePath.toUri())
+                        val fileName = documentFile?.name ?: archive.originalName
+                        val fileSize = documentFile?.length() ?: archive.fileSize
 
-                val readingProgress = PreviewManager.getReadingProgressForPreview(context, fileName, fileSize)
-                    ?: archive.readingProgress
+                        val previewPath = PreviewManager.getPreviewPathFromSnapshot(previewsSnapshot, fileName, fileSize)
+                        val readingProgress = PreviewManager.getReadingProgressFromSnapshot(previewsSnapshot, fileName, fileSize)
+                            ?: archive.readingProgress
 
-                archive.copy(
-                    fileSize = fileSize,
-                    previewPath = previewPath,
-                    readingProgress = readingProgress
-                )
+                        archive.copy(fileSize = fileSize, previewPath = previewPath, readingProgress = readingProgress)
+                    }
+                }.awaitAll()
             }
 
             val savedSortType = DirectoryManager.loadSortTypeForDirectory(context, directoryUri)
             val sortTypeToApply = savedSortType ?: SortType.NAME_ASC
-
             _currentSortType = savedSortType
-
-            Log.d(TAG, "Applying sort type: $sortTypeToApply (saved: $savedSortType)")
 
             val sortedArchives = withContext(Dispatchers.Default) {
                 SortingUtils.sortArchives(archivesWithPreviews, sortTypeToApply)
@@ -565,16 +538,16 @@ class DirectoryContentViewModel : ViewModel() {
         }
     }
 
-    fun addLoadedImage(filePath: String) {
-        _loadedImages = _loadedImages + filePath
+    fun markPreviewLoaded(cacheKey: String) {
+        if (cacheKey !in _loadedPreviewKeys) {
+            viewModelScope.launch(Dispatchers.Main) {
+                _loadedPreviewKeys = _loadedPreviewKeys + cacheKey
+            }
+        }
     }
 
-    fun removeLoadedImage(filePath: String) {
-        _loadedImages = _loadedImages - filePath
-    }
-
-    fun clearLoadedImages() {
-        _loadedImages = emptySet()
+    fun clearLoadedPreviewKeys() {
+        _loadedPreviewKeys = emptySet()
     }
 
     fun cancelPreviewGeneration() {

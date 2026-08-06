@@ -6,19 +6,64 @@ import com.demushrenich.archim.domain.SortCategory
 import com.demushrenich.archim.domain.SortType
 
 object SortingUtils {
+
+    private val naturalOrderComparator = Comparator<String> { a, b ->
+        var i = 0
+        var j = 0
+        while (i < a.length && j < b.length) {
+            val ca = a[i]
+            val cb = b[j]
+
+            if (ca.isDigit() && cb.isDigit()) {
+                var iEnd = i
+                while (iEnd < a.length && a[iEnd].isDigit()) iEnd++
+                var jEnd = j
+                while (jEnd < b.length && b[jEnd].isDigit()) jEnd++
+
+                val numA = a.substring(i, iEnd).trimStart('0').ifEmpty { "0" }
+                val numB = b.substring(j, jEnd).trimStart('0').ifEmpty { "0" }
+
+                val cmp = if (numA.length != numB.length) {
+                    numA.length - numB.length
+                } else {
+                    numA.compareTo(numB)
+                }
+                if (cmp != 0) return@Comparator cmp
+
+                i = iEnd
+                j = jEnd
+            } else {
+                if (ca != cb) return@Comparator ca.compareTo(cb)
+                i++
+                j++
+            }
+        }
+        (a.length - i) - (b.length - j)
+    }
+
+    private fun naturalSortKey(name: String): String = name.lowercase()
+
+    private fun String.naturalCompareTo(other: String): Int =
+        naturalOrderComparator.compare(naturalSortKey(this), naturalSortKey(other))
+
+    fun <T> sortByName(items: List<T>, ascending: Boolean, nameSelector: (T) -> String): List<T> {
+        val comparator = Comparator<T> { a, b -> nameSelector(a).naturalCompareTo(nameSelector(b)) }
+        return items.sortedWith(if (ascending) comparator else comparator.reversed())
+    }
+
     fun sortImages(images: List<ImageItem>, sortType: SortType): List<ImageItem> {
         return when (sortType) {
-            SortType.NAME_ASC -> images.sortedBy { it.fileName.lowercase() }
-            SortType.NAME_DESC -> images.sortedByDescending { it.fileName.lowercase() }
+            SortType.NAME_ASC -> images.sortedWith(compareBy(naturalOrderComparator) { naturalSortKey(it.fileName) })
+            SortType.NAME_DESC -> images.sortedWith(compareByDescending(naturalOrderComparator) { naturalSortKey(it.fileName) })
             SortType.DATE_ASC -> {
                 images.sortedWith(compareBy<ImageItem> {
                     if (it.creationTime == 0L) Long.MAX_VALUE else it.creationTime
-                }.thenBy { it.fileName.lowercase() })
+                }.thenComparator { a, b -> a.fileName.naturalCompareTo(b.fileName) })
             }
             SortType.DATE_DESC -> {
                 images.sortedWith(compareByDescending<ImageItem> {
                     if (it.creationTime == 0L) Long.MIN_VALUE else it.creationTime
-                }.thenBy { it.fileName.lowercase() })
+                }.thenComparator { a, b -> a.fileName.naturalCompareTo(b.fileName) })
             }
             else -> images
         }
@@ -26,18 +71,18 @@ object SortingUtils {
 
     fun sortArchives(archives: List<ArchiveInfo>, sortType: SortType): List<ArchiveInfo> {
         return when (sortType) {
-            SortType.NAME_ASC -> archives.sortedBy { it.displayName.lowercase() }
-            SortType.NAME_DESC -> archives.sortedByDescending { it.displayName.lowercase() }
+            SortType.NAME_ASC -> archives.sortedWith(compareBy(naturalOrderComparator) { naturalSortKey(it.displayName) })
+            SortType.NAME_DESC -> archives.sortedWith(compareByDescending(naturalOrderComparator) { naturalSortKey(it.displayName) })
 
             SortType.DATE_ASC -> {
                 archives.sortedWith(compareBy<ArchiveInfo> {
                     if (it.lastModified == 0L) Long.MAX_VALUE else it.lastModified
-                }.thenBy { it.displayName.lowercase() })
+                }.thenComparator { a, b -> a.displayName.naturalCompareTo(b.displayName) })
             }
             SortType.DATE_DESC -> {
                 archives.sortedWith(compareByDescending<ArchiveInfo> {
                     if (it.lastModified == 0L) Long.MIN_VALUE else it.lastModified
-                }.thenBy { it.displayName.lowercase() })
+                }.thenComparator { a, b -> a.displayName.naturalCompareTo(b.displayName) })
             }
 
             SortType.PROGRESS_ASC -> {
@@ -48,7 +93,7 @@ object SortingUtils {
                     } else {
                         progress.currentIndex.toFloat() / progress.totalImages
                     }
-                }.thenBy { it.displayName.lowercase() })
+                }.thenComparator { a, b -> a.displayName.naturalCompareTo(b.displayName) })
             }
             SortType.PROGRESS_DESC -> {
                 archives.sortedWith(compareByDescending<ArchiveInfo> {
@@ -58,7 +103,7 @@ object SortingUtils {
                     } else {
                         progress.currentIndex.toFloat() / progress.totalImages
                     }
-                }.thenBy { it.displayName.lowercase() })
+                }.thenComparator { a, b -> a.displayName.naturalCompareTo(b.displayName) })
             }
 
             SortType.LAST_OPENED_ASC -> {
@@ -69,7 +114,7 @@ object SortingUtils {
                     } else {
                         timestamp
                     }
-                }.thenBy { it.displayName.lowercase() })
+                }.thenComparator { a, b -> a.displayName.naturalCompareTo(b.displayName) })
             }
             SortType.LAST_OPENED_DESC -> {
                 archives.sortedWith(compareByDescending<ArchiveInfo> {
@@ -79,7 +124,7 @@ object SortingUtils {
                     } else {
                         timestamp
                     }
-                }.thenBy { it.displayName.lowercase() })
+                }.thenComparator { a, b -> a.displayName.naturalCompareTo(b.displayName) })
             }
         }
     }

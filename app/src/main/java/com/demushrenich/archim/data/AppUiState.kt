@@ -1,14 +1,17 @@
 package com.demushrenich.archim.data
 
 import android.net.Uri
+import com.demushrenich.archim.domain.AddDirectoryButtonPosition
 import com.demushrenich.archim.domain.ArchiveOpenMode
 import com.demushrenich.archim.domain.ImageItem
 import com.demushrenich.archim.domain.Language
 import com.demushrenich.archim.domain.PreviewGenerationMode
+import com.demushrenich.archim.domain.PreviewLoadingMode
 import com.demushrenich.archim.domain.ReadingDirection
 import com.demushrenich.archim.domain.SortType
 import com.demushrenich.archim.domain.BackgroundMode
 import com.demushrenich.archim.domain.CornerStyle
+import com.demushrenich.archim.domain.ContentViewMode
 
 data class ImageViewState(
     val images: List<ImageItem> = emptyList(),
@@ -33,11 +36,14 @@ data class LoadingState(
 data class AppSettings(
     val currentLanguage: Language = Language.SYSTEM,
     val previewGenerationMode: PreviewGenerationMode = PreviewGenerationMode.DIALOG,
+    val previewLoadingMode: PreviewLoadingMode = PreviewLoadingMode.DYNAMIC_UNLOAD,
     val readingDirection: ReadingDirection = ReadingDirection.LEFT_TO_RIGHT,
     val backgroundMode: BackgroundMode = BackgroundMode.SYSTEM,
     val archiveCornerStyle: CornerStyle = CornerStyle.ROUNDED,
     val imageCornerStyle: CornerStyle = CornerStyle.ROUNDED,
     val archiveOpenMode: ArchiveOpenMode = ArchiveOpenMode.GRID,
+    val addDirectoryButtonPosition: AddDirectoryButtonPosition = AddDirectoryButtonPosition.TOP,
+    val contentViewMode: ContentViewMode = ContentViewMode.LIST,
     val showSettings: Boolean = false
 )
 
@@ -45,7 +51,8 @@ data class AppUiState(
     val imageView: ImageViewState = ImageViewState(),
     val archive: ArchiveState = ArchiveState(),
     val loading: LoadingState = LoadingState(),
-    val settings: AppSettings = AppSettings()
+    val settings: AppSettings = AppSettings(),
+    val snackbarMessage: String? = null
 )
 
 

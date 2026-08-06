@@ -1,5 +1,8 @@
 import org.gradle.kotlin.dsl.maven
 
+include(":baselineprofile")
+
+
 pluginManagement {
     repositories {
         google {

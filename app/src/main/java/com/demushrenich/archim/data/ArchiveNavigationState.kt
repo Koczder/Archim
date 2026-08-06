@@ -60,13 +60,26 @@ class ArchiveNavigationState(private val allItems: List<ImageItem>) {
     }
 
     fun navigateBack(): Boolean {
-        if (_currentLevel > 0) {
-            val keysToRemove = _levels.keys.filter { it > _currentLevel - 1 }
-            keysToRemove.forEach { _levels.remove(it) }
-            _currentLevel--
-            return true
+        if (_currentLevel <= 0) return false
+
+        var newLevel = _currentLevel - 1
+
+        while (newLevel > 0 && isAutoSkippable(newLevel)) {
+            newLevel--
         }
-        return false
+
+        val keysToRemove = _levels.keys.filter { it > newLevel }
+        keysToRemove.forEach { _levels.remove(it) }
+        _currentLevel = newLevel
+
+        return true
+    }
+
+    private fun isAutoSkippable(levelIndex: Int): Boolean {
+        val entries = _levels[levelIndex]?.entries ?: return false
+        val folders = entries.count { it.isFolder }
+        val hasImages = entries.any { !it.isFolder }
+        return folders == 1 && !hasImages
     }
 
     fun canNavigateBack(): Boolean = _currentLevel > 0
