@@ -172,15 +172,15 @@
 
     <string name="reorder_handle">reorder handle</string>
 
-    <string name="settings_add_directory_button_position">Расположение кнопки добавления</string>
-    <string name="add_directory_button_position_top">Сверху широкая</string>
-    <string name="add_directory_button_position_bottom">Снизу широкая</string>
-    <string name="add_directory_button_position_left">Слева</string>
-    <string name="add_directory_button_position_right">Справа</string>
-    <string name="add_directory_button_position_bottom_side">Снизу</string>
-    <string name="add_directory_button_position_bottom_overlay">Снизу между страницами</string>
+    <string name="settings_add_directory_button_position">Pololoženje klaviše dobavljenja</string>
+    <string name="add_directory_button_position_top">Sgory široka</string>
+    <string name="add_directory_button_position_bottom">Sdoly široka</string>
+    <string name="add_directory_button_position_left">Lěvo</string>
+    <string name="add_directory_button_position_right">Pravo</string>
+    <string name="add_directory_button_position_bottom_side">Sdoly</string>
+    <string name="add_directory_button_position_bottom_overlay">Sdoly medžu stranicami</string>
 
-    <string name="switch_to_list_view">Снизу между страницами</string>
-    <string name="switch_to_grid_view">Снизу между страницами</string>
+    <string name="switch_to_list_view">Prěkločiti na spisok</string>
+    <string name="switch_to_grid_view">Prěkločiti na sětku</string>
 
 </resources>
